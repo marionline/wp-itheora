@@ -1,7 +1,12 @@
 <?php 
 $ecran_code_jar = ($n==0) ? 'cortado.jar' : 'cortado_url.jar' ;
 	
-if (ereg("MSIE", getenv("HTTP_USER_AGENT"))) { // Utilisation du lecteur java (code IE)
+/**
+ * ereg is deprecated in php 5.3 use preg_match to fix it 
+ * Old line:
+ * if (ereg("MSIE", getenv("HTTP_USER_AGENT"))) { // Utilisation du lecteur java (code IE)
+ */
+if (preg_match("/MSIE/", getenv("HTTP_USER_AGENT"))) { // Utilisation du lecteur java (code IE)
 	$ecran_code_cortado = '
 	<object classid="clsid:8AD9C840-044E-11D1-B3E9-00805F499D93" width="'.$x.'" height="'.$y.'" class="ecran" >
 		<param name="code" value="com.fluendo.player.Cortado.class" />
@@ -106,7 +111,12 @@ $ecran_code_message = '
 	</div>
 </div></div>';
 	
-if(ereg("MSIE", getenv("HTTP_USER_AGENT"))) {  // Si IE, tester la presence de plugin sinon, lectures multiples simultanees
+/**
+ * ereg is deprecated in php 5.3 use preg_match to fix it 
+ * Old line:
+ * if (ereg("MSIE", getenv("HTTP_USER_AGENT"))) {
+ */
+if(preg_match("/MSIE/", getenv("HTTP_USER_AGENT"))) {  // Si IE, tester la presence de plugin sinon, lectures multiples simultanees
 	if(!empty($vflv)) {
 echo '
 <script type="text/javascript"><!--
@@ -149,7 +159,12 @@ echo '
 //--></script>
 ';
 	}
-} else if(ereg("Safari", getenv("HTTP_USER_AGENT"))) { // Si Safari,lecture par Java en premier parce qu'Apple impose la lecture via Quicktime meme s'il nest pas installe
+/**
+ * ereg is deprecated in php 5.3 use preg_match to fix it 
+ * Old line:
+ * } else if(ereg("Safari", getenv("HTTP_USER_AGENT"))) { // Si Safari,lecture par Java en premier parce qu'Apple impose la lecture via Quicktime meme s'il nest pas installe
+ */
+} else if(preg_match("/Safari/", getenv("HTTP_USER_AGENT"))) { // Si Safari,lecture par Java en premier parce qu'Apple impose la lecture via Quicktime meme s'il nest pas installe
 echo '
 <script type="text/javascript"><!--
 	function startplay() {

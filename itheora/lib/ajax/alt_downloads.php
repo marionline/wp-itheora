@@ -41,7 +41,12 @@ if(url_exists($hd_ogx, "ogg")) {
 	</tr>';
 	}
 }
-echo '<table>'.$alt_download_hd.'</table>';
+/**
+ * If $alt_download_hd is set write table else do nothing 
+ * Need to allert itheora project
+ */
+if(isset($alt_download_hd))
+    echo '<table>'.$alt_download_hd.'</table>';
 
 
 // -------------------------------------------- Detection des sous-titres

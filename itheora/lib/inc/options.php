@@ -15,7 +15,12 @@ echo '
 	<script type="text/javascript"><!--
 		function play_browser() { document.getElementById(\'vid\').innerHTML = \''.txtjs($ecran_code_browser).txtjs($ecran_play_message).txtjs($ecran_end_browser).'\' ; bouton=\'\'}
 		function play_plugin() { document.getElementById(\'vid\').innerHTML = \''.txtjs($ecran_code_plugin).txtjs($ecran_play_message).txtjs($ecran_end_plugin).'\' ; bouton=\'\' }';
-if(ereg("MSIE", getenv("HTTP_USER_AGENT"))) {  // Modes de lecture pour IE
+/**
+ * ereg is deprecated in php 5.3 use preg_match to fix it 
+ * Old line:
+ * if(ereg("MSIE", getenv("HTTP_USER_AGENT"))) {  // Modes de lecture pour IE
+ */
+if(preg_match("/MSIE/", getenv("HTTP_USER_AGENT"))) {  // Modes de lecture pour IE
 	echo '
 		function play_VLC() { document.getElementById(\'vid\').innerHTML = \''.txtjs($ecran_code_VLC).txtjs($ecran_play_message).txtjs($ecran_end_VLC).'\' ; bouton=\'\' }
 		function play_WMP() { document.getElementById(\'vid\').innerHTML = \''.txtjs($ecran_code_WMP).txtjs($ecran_play_message).txtjs($ecran_end_WMP).'\' ; bouton=\'\'}
@@ -25,7 +30,12 @@ echo '
 		function play_cortado() { document.getElementById(\'vid\').innerHTML = \''.txtjs($ecran_code_cortado).txtjs($ecran_play_message).txtjs($ecran_end_cortado).'\' ; bouton=\'\'}'.$function_play_neolao.'
 	//--></script>';
 
-if(ereg("MSIE", getenv("HTTP_USER_AGENT"))) {  // Modes de lecture pour IE
+/**
+ * ereg is deprecated in php 5.3 use preg_match to fix it 
+ * Old line:
+ * if(ereg("MSIE", getenv("HTTP_USER_AGENT"))) {  // Modes de lecture pour IE
+ */
+if(preg_match("/MSIE/", getenv("HTTP_USER_AGENT"))) {  // Modes de lecture pour IE
 	$ecran_option_play_plugin = '
 	<tr><td>'.txt($txt_play_plugin).'
 		<ul>

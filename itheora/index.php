@@ -808,13 +808,23 @@ echo '//--></script>';
 include ("lib/inc/playlist.php");
 
 //-----------------------------------------------------------Script de dection du plugin java pour "stupid IE"
-if (ereg("MSIE", getenv("HTTP_USER_AGENT"))) {
+/**
+ * ereg is deprecated in php 5.3 use preg_match to fix it 
+ * Old line:
+ * if (ereg("MSIE", getenv("HTTP_USER_AGENT"))) {
+ */
+if (preg_match("/MSIE/", getenv("HTTP_USER_AGENT"))) {
 echo '
 <script  type="text/javascript" src="lib/JavaIEDetect.js"></script>
 ';
 // si Java >= 0 alors plugin existe
 }
-if (ereg("Konqueror", getenv("HTTP_USER_AGENT"))) {
+/**
+ * ereg is deprecated in php 5.3 use preg_match to fix it 
+ * Old line:
+ * if (ereg("Konqueror", getenv("HTTP_USER_AGENT"))) {
+ */
+if (preg_match("/Konqueror/", getenv("HTTP_USER_AGENT"))) {
 echo '<script type="text/javascript"><!--
 	function recharger() { }; function redimensionner() { };
 //--></script>';
@@ -857,7 +867,12 @@ if($vogx==$verror) {
 
 //-----------------------------------Gestion de la taille du player
 echo '<script type="text/javascript"><!-- ';
-if (ereg("Safari", getenv("HTTP_USER_AGENT"))) {
+/**
+ * ereg is deprecated in php 5.3 use preg_match to fix it 
+ * Old line:
+ * if (ereg("Safari", getenv("HTTP_USER_AGENT"))) {
+ */
+if (preg_match("/Safari/", getenv("HTTP_USER_AGENT"))) {
 	echo '
 	wpage=window.innerWidth; hpage=window.innerHeight;';
 } else {
