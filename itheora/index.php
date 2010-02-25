@@ -120,7 +120,10 @@ if(getp('v')) {
 	if(url_exists(getp('v'), "html")) { // v est une page html
 		$video = $verror;
 	} else {
-		$video = (strstr( getp('v') ,".")) ? getp('v') : getp('v').".ogg" ;
+		/**
+		 * Maybe to fix in the itheora project 
+		 */
+		$video = (strstr( getp('v') ,".")) ? getp('v') : getp('v').".ogv" ;
 	}
 } else { 
 	$video = $verror;
