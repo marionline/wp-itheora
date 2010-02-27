@@ -24,6 +24,13 @@ License: GPL version 3
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*****************************************************
+ *
+ *
+ *  Start wp-itheora section for administration menu
+ *
+ *
+ *****************************************************/
 
 function wp_itheora_menu() {
     //minimal capability
@@ -40,10 +47,18 @@ function wp_itheora_menu() {
     }
 }
 
+/**
+ * wp_itheora_admin_head 
+ * my stylesheet for wp-itheora section
+ */
 function wp_itheora_admin_head() {
     echo "<link rel='stylesheet' href='".WP_PLUGIN_URL."/wp-itheora/style.css' type='text/css'/>";
 }
 
+/**
+ * wp_itheora_header 
+ * add image to the top of wp-itheora pages
+ */
 function wp_itheora_header() {
     echo "\n<div class=\"itheora-admin\">\n";
     echo "<img src=\"".WP_PLUGIN_URL."/wp-itheora/img/titre.jpg\" alt=\"\" />\n";
@@ -51,6 +66,10 @@ function wp_itheora_header() {
     echo "</div>\n";
 }
 
+/**
+ * wp_itheora_config_player 
+ * call when the user whant to config the basic settings of itheora player
+ */
 function wp_itheora_config_player() {
     wp_itheora_header();
     include('itheora_path.php');
@@ -58,6 +77,10 @@ function wp_itheora_config_player() {
     require('itheora/admin/pages/config_player.php');
 }
 
+/**
+ * wp_itheora_create_player 
+ * create html code and view preview
+ */
 function wp_itheora_create_player() {
     wp_itheora_header();
 
@@ -110,6 +133,63 @@ function wp_itheora_infopage() {
 <?php
 } /** end wp_ithoera_infopage() */
 
+/*****************************************************
+ *
+ *
+ *  End wp-itheora section for administration menu
+ *
+ *
+ *****************************************************/
+
+
+/*****************************************************
+ *
+ *
+ *  Start wp-itheora section for TinyMCE integration
+ *
+ *
+ *****************************************************/
+
+function wp_itheora_addbutton() {
+       // Don't bother doing this stuff if the current user lacks permissions
+       if ( ! current_user_can('edit_posts') && ! current_user_can('edit_pages') )
+	        return;
+        
+          // Add only in Rich Editor mode
+          if ( get_user_option('rich_editing') == 'true') {
+	           add_filter("mce_external_plugins", "add_wp_itheora_tinymce_plugin");
+		   add_filter('mce_buttons', 'register_wp_itheora_button');
+	  }
+}
+ 
+function register_wp_itheora_button($buttons) {
+       array_push($buttons, "|", "WPitheora");
+       return $buttons;
+}
+ 
+// Load the TinyMCE plugin : editor_plugin.js (wp2.5)
+function add_wp_itheora_tinymce_plugin($plugin_array) {
+       $plugin_array['WPitheora'] = WP_PLUGIN_URL."/wp-itheora/tinymce3/editor_plugin.js";
+       return $plugin_array;
+}
+ 
+// init process for button control
+add_action('init', 'wp_itheora_addbutton');
+
+/*****************************************************
+ *
+ *
+ *  End wp-itheora section for TinyMCE integration
+ *
+ *
+ *****************************************************/
+
+
+/**
+ * wp_itheora_activation 
+ * 
+ * When the plugin is activated this function run
+ */
 function wp_itheora_activation() {
     static $conf_itheora;
     static $conf_dir;
