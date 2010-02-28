@@ -202,5 +202,4 @@ add_action('init', 'start_wpitheora');
 function start_wpitheora() {
     global $WPItheora;
     $WPItheora = new WPItheora();
-    add_action('init', $WPItheora->wp_itheora_addbutton());
 }
