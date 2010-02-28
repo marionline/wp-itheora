@@ -22,6 +22,10 @@ ITheora is a PHP script allowing you to broadcast ogg/theora/vorbis only videos 
 = Usage? =
 Follow the official documentation, you can skip "Prerequisites" and "Installation"
 http://itheora.org/?p=install
+Just create your player and copy the html code in your Wordpress html editor.
+= Prevent visual editor modification =
+The wordpress visual editor modify itheora object code: turn off the visual editor for all your edits, uncheck the visual editor checkbox in your profile.
+I'm working to resolve this problem, I want to add a special tag for itheora.
 
 == Screenshots ==
 Nothing

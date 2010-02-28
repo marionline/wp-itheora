@@ -37,6 +37,56 @@ class WPItheora {
 	add_action('admin_menu', array(&$this, 'wp_itheora_menu'));
     }
 
+    /**
+     * wp_itheora_activation 
+     * 
+     * When the plugin is activated this function run
+     */
+    function wp_itheora_activation() {
+	static $conf_itheora;
+	static $conf_dir;
+	$conf_itheora = WP_PLUGIN_DIR."/wp-itheora/itheora/admin/config/player.php";
+	$conf_dir = dirname($conf_itheora);
+
+	if(file_exists($conf_itheora) && is_writable($conf_itheora)){
+	    static $file_config_player;
+	    $file_config_player='<?php'."\n";
+	    $file_config_player .= '$title="ITheora, I really broadcast myself";'."\n\n"; 
+	    $file_config_player .= '$function_manual_play=true;'."\n"; 
+	    $file_config_player .= '$function_info=true;'."\n"; 
+	    $file_config_player .= '$function_ts=true;'."\n"; 
+	    $file_config_player .= '$function_name=true;'."\n\n"; 
+	    
+	    $file_config_player .= '$function_share=true;'."\n"; 
+	    $file_config_player .= '$function_download=true;'."\n"; 
+	    $file_config_player .= '$function_fullscreen=true;'."\n"; 
+	    $file_config_player .= '$function_options=true;'."\n\n"; 
+	    
+	    $file_config_player .= '$function_error_but=true;'."\n"; 
+	    $file_config_player .= '$function_podcast=true;'."\n"; 
+	    $file_config_player .= '$function_alt_download=true;'."\n\n"; 
+	    
+	    static $document_root;
+	    $document_root=WP_PLUGIN_DIR.'/wp-itheora/itheora';
+	    $file_config_player .= '$document_root="'.$document_root.'";'."\n\n";
+	    
+	    $file_config_player .= '$blacklist = '."\"\"; \n";
+	    $file_config_player .= '$whitelist = '."\"\"; \n";
+	    $file_config_player .= '?>';
+	    
+	    //$old_file_config_player= fopen("config/player.php","w");
+	    $old_file_config_player= fopen($conf_itheora,"w");
+	    fwrite($old_file_config_player,$file_config_player);
+	    fclose($old_file_config_player);
+	} elseif(file_exists($conf_dir) && !is_writable($conf_dir)) {
+	    deactivate_plugins(__FILE__);
+	    die(__("Need to make directory '$conf_dir' writeable or create a writeable '$conf_itheora' file."));
+	} else {
+	    deactivate_plugins(__FILE__);
+	    die(__("Need to make file '$conf_itheora' writeable."));
+	}
+    }
+
     function wp_itheora_menu() {
 	//minimal capability
 	$mincap=9;
@@ -147,59 +197,9 @@ class WPItheora {
      *****************************************************/
 }
 
-/**
- * wp_itheora_activation 
- * 
- * When the plugin is activated this function run
- */
-function wp_itheora_activation() {
-    static $conf_itheora;
-    static $conf_dir;
-    $conf_itheora = WP_PLUGIN_DIR."/wp-itheora/itheora/admin/config/player.php";
-    $conf_dir = dirname($conf_itheora);
+global $WPItheora;
+$WPItheora = new WPItheora();
 
-    if(file_exists($conf_itheora) && is_writable($conf_itheora)){
-	static $file_config_player;
-	$file_config_player='<?php'."\n";
-	$file_config_player .= '$title="ITheora, I really broadcast myself";'."\n\n"; 
-	$file_config_player .= '$function_manual_play=true;'."\n"; 
-	$file_config_player .= '$function_info=true;'."\n"; 
-	$file_config_player .= '$function_ts=true;'."\n"; 
-	$file_config_player .= '$function_name=true;'."\n\n"; 
-	
-	$file_config_player .= '$function_share=true;'."\n"; 
-	$file_config_player .= '$function_download=true;'."\n"; 
-	$file_config_player .= '$function_fullscreen=true;'."\n"; 
-	$file_config_player .= '$function_options=true;'."\n\n"; 
-	
-	$file_config_player .= '$function_error_but=true;'."\n"; 
-	$file_config_player .= '$function_podcast=true;'."\n"; 
-	$file_config_player .= '$function_alt_download=true;'."\n\n"; 
-	
-	static $document_root;
-        $document_root=WP_PLUGIN_DIR.'/wp-itheora/itheora';
-	$file_config_player .= '$document_root="'.$document_root.'";'."\n\n";
-	
-	$file_config_player .= '$blacklist = '."\"\"; \n";
-	$file_config_player .= '$whitelist = '."\"\"; \n";
-	$file_config_player .= '?>';
-	
-	//$old_file_config_player= fopen("config/player.php","w");
-	$old_file_config_player= fopen($conf_itheora,"w");
-	fwrite($old_file_config_player,$file_config_player);
-	fclose($old_file_config_player);
-    } elseif(file_exists($conf_dir) && !is_writable($conf_dir)) {
-	deactivate_plugins(__FILE__);
-	die(__("Need to make directory '$conf_dir' writeable or create a writeable '$conf_itheora' file."));
-    } else {
-	deactivate_plugins(__FILE__);
-	die(__("Need to make file '$conf_itheora' writeable."));
-    }
-}
-register_activation_hook(__FILE__, 'wp_itheora_activation');
+register_activation_hook(__FILE__, $WPItheora->wp_itheora_activation());
 
-add_action('init', 'start_wpitheora');
-function start_wpitheora() {
-    global $WPItheora;
-    $WPItheora = new WPItheora();
-}
+add_action('init', $WPItheora->WPItheora());
