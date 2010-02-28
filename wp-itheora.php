@@ -145,46 +145,6 @@ class WPItheora {
      *
      *
      *****************************************************/
-
-
-    /*****************************************************
-     *
-     *
-     *  Start wp-itheora section for TinyMCE integration
-     *
-     *
-     *****************************************************/
-
-    function wp_itheora_addbutton() {
-	   // Don't bother doing this stuff if the current user lacks permissions
-	   if ( ! current_user_can('edit_posts') && ! current_user_can('edit_pages') )
-		    return;
-	    
-	      // Add only in Rich Editor mode
-	      if ( get_user_option('rich_editing') == 'true') {
-		       add_filter("mce_external_plugins", array(&$this, "add_wp_itheora_tinymce_plugin"));
-		       add_filter('mce_buttons', array(&$this, 'register_wp_itheora_button'));
-	      }
-    }
-     
-    function register_wp_itheora_button($buttons) {
-	   array_push($buttons, "|", "WPitheora");
-	   return $buttons;
-    }
-     
-    // Load the TinyMCE plugin : editor_plugin.js (wp2.5)
-    function add_wp_itheora_tinymce_plugin($plugin_array) {
-	   $plugin_array['WPitheora'] = WP_PLUGIN_URL."/wp-itheora/tinymce3/editor_plugin.js";
-	   return $plugin_array;
-    }
-     
-    /*****************************************************
-     *
-     *
-     *  End wp-itheora section for TinyMCE integration
-     *
-     *
-     *****************************************************/
 }
 
 /**

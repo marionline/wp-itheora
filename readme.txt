@@ -34,7 +34,6 @@ This is the first version, there are some bug to resolve but it work fine for me
 Nothing to upgrade.
 
 == TODO ==
-* Resolve bug to fix: error when I give only the filename of a video without extension.
 * And need to test all features "Create player".
 
 Other:
@@ -44,3 +43,6 @@ Other:
 * Add tag modification features
 * Add Create playlist option
 * Add send file and list file on "data" directory (in future list file on amazon s3)
+
+== FIX ==
+* Resolve bug to fix: error when I give only the filename of a video without extension. Now work for me.
