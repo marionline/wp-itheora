@@ -33,7 +33,7 @@ License: GPL version 3
  *****************************************************/
 class WPItheora {
 
-    function WPItheora(){
+    function itheora_admin(){
 	add_action('admin_menu', array(&$this, 'wp_itheora_menu'));
     }
 
@@ -200,6 +200,6 @@ class WPItheora {
 global $WPItheora;
 $WPItheora = new WPItheora();
 
-register_activation_hook(__FILE__, $WPItheora->wp_itheora_activation());
+register_activation_hook(__FILE__, array(&$WPItheora, 'wp_itheora_activation'));
 
-add_action('init', $WPItheora->WPItheora());
+add_action('init', array(&$WPItheora, 'itheora_admin'));
