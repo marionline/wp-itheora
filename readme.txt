@@ -20,9 +20,11 @@ ITheora is a PHP script allowing you to broadcast ogg/theora/vorbis only videos 
 
 == Frequently Asked Questions ==
 = Usage? =
-Follow the official documentation, you can skip "Prerequisites" and "Installation"
-http://itheora.org/?p=install
-Just create your player and copy the html code in your Wordpress html editor.
+Just create your player from admin menu and copy the html code in your Wordpress html editor.
+You need to use "<!--start_itheora-->" and "<!--end_itheora-->" tags to prevent html modifcation from wordpress.
+The code generated from wp-itheora contain these tags.
+Follow the official documentation for more info, you can skip "Prerequisites" and "Installation"
+http://itheora.org/en/install
 = Prevent visual editor modification =
 The wordpress visual editor modify itheora object code: turn off the visual editor for all your edits, uncheck the visual editor checkbox in your profile.
 I'm working to resolve this problem, I want to add a special tag for itheora.
@@ -38,15 +40,16 @@ This is the first version, there are some bug to resolve but it work fine for me
 Nothing to upgrade.
 
 == TODO ==
-* And need to test all features "Create player".
+* Need to create the different languages po files.
+* Need to test all features "Create player".
 
 Other:
 
 * Add integration to wordpress editor (need a workaround to prevent the modification of code by visual mode)
 * Add thumbnail features
-* Add tag modification features
+* Add tag modification features of video
 * Add Create playlist option
 * Add send file and list file on "data" directory (in future list file on amazon s3)
 
-== FIX ==
+== FIXED ==
 * Resolve bug to fix: error when I give only the filename of a video without extension. Now work for me.

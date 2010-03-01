@@ -32,6 +32,7 @@ License: GPL version 3
  *
  *****************************************************/
 class WPItheora {
+    private $wsh_raw_parts=array();
 
     function itheora_admin(){
 	add_action('admin_menu', array(&$this, 'wp_itheora_menu'));
@@ -114,7 +115,7 @@ class WPItheora {
      * wp_itheora_header 
      * add image to the top of wp-itheora pages
      */
-    function wp_itheora_header() {
+    protected function wp_itheora_header() {
 	echo "\n<div class=\"itheora-admin\">\n";
 	echo "<img src=\"".WP_PLUGIN_URL."/wp-itheora/img/titre.jpg\" alt=\"\" />\n";
 	echo "<img src=\"".WP_PLUGIN_URL."/wp-itheora/img/logo.png\" alt=\"\" />\n";
@@ -195,6 +196,74 @@ class WPItheora {
      *
      *
      *****************************************************/
+    
+    /*****************************************************
+     *
+     *
+     *  These functions are copied from Raw HTML capability
+     *  Raw HTML Plugin was written by Janis Elsts
+     *  Plugin URI: http://w-shadow.com/blog/2007/12/13/raw-html-in-wordpress/
+     *  Version: 1.2.5
+     *  Author URI: http://w-shadow.com/blog/
+     *
+     *
+     *****************************************************/
+    /**********************************************
+	    Filter inline blocks of itheora
+    ***********************************************/
+
+    function wp_itheora_exclusions($text){
+	    $tags = array(array('<!--start_itheora-->', '<!--end_itheora-->'), array('[itheora]', '[/itheora]'));
+
+	    foreach ($tags as $tag_pair){
+		    list($start_tag, $end_tag) = $tag_pair;
+		    
+		    //Find the start tag
+		    $start = stripos($text, $start_tag, 0);
+		    while($start !== false){
+			    $content_start = $start + strlen($start_tag);
+			    
+			    //find the end tag
+			    $fin = stripos($text, $end_tag, $content_start);
+			    
+			    //break if there's no end tag
+			    if ($fin == false) break;
+			    
+			    //extract the content between the tags
+			    $content = substr($text, $content_start,$fin-$content_start);
+			    
+			    //Store the content and replace it with a marker
+			    $this->wsh_raw_parts[]=$content;
+			    $replacement = "!ITHEORABLOCK".(count($this->wsh_raw_parts)-1)."!";
+			    $text = substr_replace($text, $replacement, $start, 
+				    $fin+strlen($end_tag)-$start
+			     );
+			    
+			    //Have we reached the end of the string yet?
+			    if ($start + strlen($replacement) > strlen($text)) break;
+			    
+			    //Find the next start tag
+			    $start = stripos($text, $start_tag, $start + strlen($replacement));
+		    }
+	    }
+	    return $text;
+    }
+
+    protected function wp_itheora_insertion_callback($matches){
+	    return $this->wsh_raw_parts[intval($matches[1])];
+    }
+
+    function wp_itheora_insert_exclusions($text){
+	    if(!isset($this->wsh_raw_parts)) return $text;
+	    return preg_replace_callback("/!ITHEORABLOCK(\d+?)!/", array(&$this, "wp_itheora_insertion_callback"), $text);
+    }
+    /*****************************************************
+     *
+     *
+     *  End Raw HTML capability section
+     *
+     *
+     *****************************************************/
 }
 
 global $WPItheora;
@@ -203,3 +272,6 @@ $WPItheora = new WPItheora();
 register_activation_hook(__FILE__, array(&$WPItheora, 'wp_itheora_activation'));
 
 add_action('init', array(&$WPItheora, 'itheora_admin'));
+
+add_filter('the_content', array(&$WPItheora, 'wp_itheora_exclusions'), 2);
+add_filter('the_content', array(&$WPItheora, 'wp_itheora_insert_exclusions'), 1001);

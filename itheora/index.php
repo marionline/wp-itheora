@@ -67,19 +67,23 @@ if (isset($par)&& isset($itheora)) {
 	if(isset($itheora_code)) {
 		$par = str_replace('&', '&amp;', $par);
 		if(isset($ihost) && isset($iscript)) {
-	echo '<p style="margin: 0; padding : 0; color : green;">&lt;object data="http://'.$ihost.$iscript.$par.'" type="application/xhtml+xml" style="width:'.$pars['w'].'px; height:'.$pars['h'].'px;"&gt;</p>
+	echo '<p style="margin: 0; padding : 0; color : red;">&lt;!--start_itheora--&gt;</p>
+	    <p style="margin: 0; padding : 0; color : green;">&lt;object data="http://'.$ihost.$iscript.$par.'" type="application/xhtml+xml" style="width:'.$pars['w'].'px; height:'.$pars['h'].'px;"&gt;</p>
 <p style="margin: 0; padding : 0; text-indent:20px; color :#808000;">&lt;!--[if IE]&gt;</p>
 <p style="margin: 0; padding : 0; text-indent:40px; color :#808000;">&lt;iframe src="http://'.$ihost.$iscript.$par.'" style="width:'.$pars['w'].'px; height:'.$pars['h'].'px;" allowtransparency="true" frameborder="0" &gt;</p>
 <p style="margin: 0; padding : 0; text-indent:40px; color :#808000;">&lt;/iframe&gt;</p>
 <p style="margin: 0; padding : 0; text-indent:20px; color :#808000;">&lt;![endif]--&gt; </p>
-<p style="margin: 0; padding : 0; color : green;">&lt;/object&gt;</p>';
+<p style="margin: 0; padding : 0; color : green;">&lt;/object&gt;</p>
+<p style="margin: 0; padding : 0; color : red;">&lt;!--end_itheora--&gt;</p>';
 		} else {
-	echo '<p style="margin: 0; padding : 0; color : green;">&lt;object data="'.$itheoraUrl.$par.'" type="application/xhtml+xml" style="width:'.$pars['w'].'px; height:'.$pars['h'].'px;"&gt;</p>
+	echo '<p style="margin: 0; padding : 0; color : red;">&lt;!--start_itheora--&gt;</p>
+<p style="margin: 0; padding : 0; color : green;">&lt;object data="'.$itheoraUrl.$par.'" type="application/xhtml+xml" style="width:'.$pars['w'].'px; height:'.$pars['h'].'px;"&gt;</p>
 <p style="margin: 0; padding : 0; text-indent:20px; color :#808000;">&lt;!--[if IE]&gt;</p>
 <p style="margin: 0; padding : 0; text-indent:40px; color :#808000;">&lt;iframe src="'.$itheoraUrl.$par.'" style="width:'.$pars['w'].'px; height:'.$pars['h'].'px;" allowtransparency="true" frameborder="0" &gt;</p>
 <p style="margin: 0; padding : 0; text-indent:40px; color :#808000;">&lt;/iframe&gt;</p>
 <p style="margin: 0; padding : 0; text-indent:20px; color :#808000;">&lt;![endif]--&gt; </p>
-<p style="margin: 0; padding : 0; color : green;">&lt;/object&gt;</p>';
+<p style="margin: 0; padding : 0; color : green;">&lt;/object&gt;</p>
+<p style="margin: 0; padding : 0; color : red;">&lt;!--end_itheora--&gt;</p>';
 		}
 	unset($itheora_code);
 	} else {
