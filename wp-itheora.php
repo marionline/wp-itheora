@@ -33,8 +33,11 @@ License: GPL version 3
  *****************************************************/
 class WPItheora {
     private $wsh_raw_parts=array();
+    private $domain = 'wpitheora';
 
     function itheora_admin(){
+	$dir = dirname(plugin_basename(__FILE__));
+	load_plugin_textdomain( $this->domain, 'wp-content/plugins/'.$dir.'/lang/');
 	add_action('admin_menu', array(&$this, 'wp_itheora_menu'));
     }
 
@@ -93,10 +96,10 @@ class WPItheora {
 	$mincap=9;
 
 	$page = array();
-	$page[] = add_menu_page('itheora', 'itheora', $mincap, basename(__FILE__), array(&$this, 'wp_itheora_infopage'), 'http://localhost/~mario/pluginwordpress/wp-content/plugins/wp-itheora/img/fish_theora_org.png');
-	$page[] = add_submenu_page(basename(__FILE__), __('Wordpress itheora administration', 'wp-itheora'), __('itheora info', 'wp-itheora'), $mincap, basename(__FILE__),  array(&$this, 'wp_itheora_infopage'));
-	$page[] = add_submenu_page(basename(__FILE__),__('Wordpress itheora administration', 'wp-itheora'), __('Create player', 'wp-itheora'), $mincap, 'wp-itheora/create-player',  array(&$this, 'wp_itheora_create_player'));
-	$page[] = add_submenu_page(basename(__FILE__),__('Wordpress itheora administration', 'wp-itheora'), __('Options', 'wp-itheora'), $mincap, 'wp-itheora/options',  array(&$this, 'wp_itheora_config_player'));
+	$page[] = add_menu_page('itheora', 'itheora', $mincap, basename(__FILE__), array(&$this, 'wp_itheora_infopage'), WP_PLUGIN_URL.'/wp-itheora/img/fish_theora_org.png');
+	$page[] = add_submenu_page(basename(__FILE__), __('Wordpress itheora administration', $this->domain), __('itheora info', $this->domain), $mincap, basename(__FILE__),  array(&$this, 'wp_itheora_infopage'));
+	$page[] = add_submenu_page(basename(__FILE__),__('Wordpress itheora administration', $this->domain), __('Create player', $this->domain), $mincap, 'wp-itheora/create-player',  array(&$this, 'wp_itheora_create_player'));
+	$page[] = add_submenu_page(basename(__FILE__),__('Wordpress itheora administration', $this->domain), __('Options', $this->domain), $mincap, 'wp-itheora/options',  array(&$this, 'wp_itheora_config_player'));
 	
 	for($i = 0; $i < count($page); $i++) {
 	    add_action( "admin_print_scripts-".$page[$i], array(&$this, 'wp_itheora_admin_head') );
@@ -154,37 +157,37 @@ class WPItheora {
 	echo "
 	<div id=\"wp-itheora-info\">
 	    <h1>ITheora</h1>
-	    <p>".__("ITheora is a PHP script allowing you to broadcast ogg/theora/vorbis only videos (and audios) files. It's simple to install and use. It may suit the usual blogger or the expert webmaster.")."</p>
+	    <p>".__("ITheora is a PHP script allowing you to broadcast ogg/theora/vorbis only videos (and audios) files. It's simple to install and use. It may suit the usual blogger or the expert webmaster.", $this->domain)."</p>
 
-	    <p>".__("Itheora is different from other software allowing to stream videos, because it offers other features for the user visiting the website:")."</p>
+	    <p>".__("Itheora is different from other software allowing to stream videos, because it offers other features for the user visiting the website:", $this->domain)."</p>
 	    <ul>
-	    <li>".__("choose between watching videos in an embedded player (much like a flash player), and watch the video in your favorite media player (using a plugin)")."</li>
-	    <li>".__("download the video file")."</li>
-	    <li>".__("share the video by using the HTML source code available")."</li>
-	    <li>".__("display in full screen mode")."</li>
-	    <li>".__("very quick display of the video.")."</li>
+	    <li>".__("choose between watching videos in an embedded player (much like a flash player), and watch the video in your favorite media player (using a plugin)", $this->domain)."</li>
+	    <li>".__("download the video file", $this->domain)."</li>
+	    <li>".__("share the video by using the HTML source code available", $this->domain)."</li>
+	    <li>".__("display in full screen mode", $this->domain)."</li>
+	    <li>".__("very quick display of the video.", $this->domain)."</li>
 
 	    </ul>
-	    <p>".__("Itheora has real improvements for the webmaster :")."</p>
+	    <p>".__("Itheora has real improvements for the webmaster :", $this->domain)."</p>
 	    <ul>
-	    <li>".__("displaying a thumbnail when the player is being launched")."</li>
-	    <li>".__("almost complete interface customisation (skins, options, and languages)")."</li>
-	    <li>".__("very simple XHTML-compliant code, easy to configure")."</li>
-	    <li>".__("download possible by peer-to-peer (Bittorrent or Coral)")."</li>
-	    <li>".__("streaming in real time and playing external videos (on an other server with http or ftp protocol)")."</li>
-	    <li>".__("playlist (free format .xspf) or ogg podcast can be used")."</li>
-	    <li>".__("support the html5 tag video")."</li>
+	    <li>".__("displaying a thumbnail when the player is being launched", $this->domain)."</li>
+	    <li>".__("almost complete interface customisation (skins, options, and languages)", $this->domain)."</li>
+	    <li>".__("very simple XHTML-compliant code, easy to configure", $this->domain)."</li>
+	    <li>".__("download possible by peer-to-peer (Bittorrent or Coral)", $this->domain)."</li>
+	    <li>".__("streaming in real time and playing external videos (on an other server with http or ftp protocol)", $this->domain)."</li>
+	    <li>".__("playlist (free format .xspf) or ogg podcast can be used", $this->domain)."</li>
+	    <li>".__("support the html5 tag video", $this->domain)."</li>
 
-	    <li>".__("a code generator make easier the configuration")."</li>
-	    <li>".__("fall back on flash is possible")."</li>
+	    <li>".__("a code generator make easier the configuration", $this->domain)."</li>
+	    <li>".__("fall back on flash is possible", $this->domain)."</li>
 	    </ul>
-	    <h1>".__("You can tube, but I theora")."</h1>
-	    <p>".__("This software is like an alternative to the proprietary Flash players (file format and software), and is based on the Cortado java applet (ITheora is not a simple wrapper for Cortado), and helps the spreading of ogg/theora free (as in freedom ;) ) format.")."</p>
-	    <p>".__("In the same time, it allows you to be independant from online video services, such as youtube and dailymotion, because you can share the source code of the video from a blogger to another.")."</p>
-	    <h1>".__("Theora Sea")."</h1>
-	    <p>".__("Theora Sea is a sharing video area. This area is a simple list of links which target to hosted video, you cannot upload videos on this site. However, it make easier to generate podcast.")."</p>
+	    <h1>".__("You can tube, but I theora", $this->domain)."</h1>
+	    <p>".__("This software is like an alternative to the proprietary Flash players (file format and software), and is based on the Cortado java applet (ITheora is not a simple wrapper for Cortado), and helps the spreading of ogg/theora free (as in freedom ;) ) format.", $this->domain)."</p>
+	    <p>".__("In the same time, it allows you to be independant from online video services, such as youtube and dailymotion, because you can share the source code of the video from a blogger to another.", $this->domain)."</p>
+	    <h1>".__("Theora Sea", $this->domain)."</h1>
+	    <p>".__("Theora Sea is a sharing video area. This area is a simple list of links which target to hosted video, you cannot upload videos on this site. However, it make easier to generate podcast.", $this->domain)."</p>
 	    <p style=\"text-align: center\"><a href=\"http://theorasea.org\"><img src=\"".WP_PLUGIN_URL."/wp-itheora/img/logo.png\" alt=\"\" /></a></p>
-	    <p>".__("So you can submit videos that you host yourself, yet know that you are the unique liable of what you broadcast. Check that you respect copyright low of your country.")."</p>
+	    <p>".__("So you can submit videos that you host yourself, yet know that you are the unique liable of what you broadcast. Check that you respect copyright low of your country.", $this->domain)."</p>
 	</div>
 	";
     } /** end wp_ithoera_infopage() */
@@ -266,7 +269,6 @@ class WPItheora {
      *****************************************************/
 }
 
-load_plugin_textdomain('wp-itheora', 'wp-content/plugins/'.dirname(plugin_basename(__FILE__)).'/lang');
 
 global $WPItheora;
 $WPItheora = new WPItheora();

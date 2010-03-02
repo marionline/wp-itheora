@@ -1,0 +1,173 @@
+# WP-itheora pot file.
+# Copyright (C) 2010
+# This file is distributed under the same license as the WP-itheora package.
+#
+# mario_santagiuliana <mario at marionline.it>, 2010.
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2010-03-02 00:59+0100\n"
+"PO-Revision-Date: 2010-03-02 16:30+0100\n"
+"Last-Translator: mario_santagiuliana <mario at marionline.it>\n"
+"Language-Team: Italian <fedora-trans-it at redhat.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Lokalize 1.0\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: wp-itheora.php:97 wp-itheora.php:98 wp-itheora.php:99
+msgid "Wordpress itheora administration"
+msgstr "Wordpress itheora administration"
+
+#: wp-itheora.php:97
+msgid "itheora info"
+msgstr "itheora info"
+
+#: wp-itheora.php:98
+msgid "Create player"
+msgstr "Create player"
+
+#: wp-itheora.php:99
+msgid "Options"
+msgstr "Options"
+
+#: wp-itheora.php:157
+msgid ""
+"ITheora is a PHP script allowing you to broadcast ogg/theora/vorbis only "
+"videos (and audios) files. It's simple to install and use. It may suit the "
+"usual blogger or the expert webmaster."
+msgstr ""
+"ITheora is a PHP script allowing you to broadcast ogg/theora/vorbis only "
+"videos (and audios) files. It's simple to install and use. It may suit the "
+"usual blogger or the expert webmaster."
+
+#: wp-itheora.php:159
+msgid ""
+"Itheora is different from other software allowing to stream videos, because "
+"it offers other features for the user visiting the website:"
+msgstr ""
+"Itheora is different from other software allowing to stream videos, because "
+"it offers other features for the user visiting the website:"
+
+#: wp-itheora.php:161
+msgid ""
+"choose between watching videos in an embedded player (much like a flash "
+"player), and watch the video in your favorite media player (using a plugin)"
+msgstr ""
+"choose between watching videos in an embedded player (much like a flash "
+"player), and watch the video in your favorite media player (using a plugin)"
+
+#: wp-itheora.php:162
+msgid "download the video file"
+msgstr "download the video file"
+
+#: wp-itheora.php:163
+msgid "share the video by using the HTML source code available"
+msgstr "share the video by using the HTML source code available"
+
+#: wp-itheora.php:164
+msgid "display in full screen mode"
+msgstr "display in full screen mode"
+
+#: wp-itheora.php:165
+msgid "very quick display of the video."
+msgstr "very quick display of the video."
+
+#: wp-itheora.php:168
+msgid "Itheora has real improvements for the webmaster :"
+msgstr "Itheora has real improvements for the webmaster :"
+
+#: wp-itheora.php:170
+msgid "displaying a thumbnail when the player is being launched"
+msgstr "displaying a thumbnail when the player is being launched"
+
+#: wp-itheora.php:171
+msgid "almost complete interface customisation (skins, options, and languages)"
+msgstr ""
+"almost complete interface customisation (skins, options, and languages)"
+
+#: wp-itheora.php:172
+msgid "very simple XHTML-compliant code, easy to configure"
+msgstr "very simple XHTML-compliant code, easy to configure"
+
+#: wp-itheora.php:173
+msgid "download possible by peer-to-peer (Bittorrent or Coral)"
+msgstr "download possible by peer-to-peer (Bittorrent or Coral)"
+
+#: wp-itheora.php:174
+msgid ""
+"streaming in real time and playing external videos (on an other server with "
+"http or ftp protocol)"
+msgstr ""
+"streaming in real time and playing external videos (on an other server with "
+"http or ftp protocol)"
+
+#: wp-itheora.php:175
+msgid "playlist (free format .xspf) or ogg podcast can be used"
+msgstr "playlist (free format .xspf) or ogg podcast can be used"
+
+#: wp-itheora.php:176
+msgid "support the html5 tag video"
+msgstr "support the html5 tag video"
+
+#: wp-itheora.php:178
+msgid "a code generator make easier the configuration"
+msgstr "a code generator make easier the configuration"
+
+#: wp-itheora.php:179
+msgid "fall back on flash is possible"
+msgstr "fall back on flash is possible"
+
+#: wp-itheora.php:181
+msgid "You can tube, but I theora"
+msgstr "You can tube, but I theora"
+
+#: wp-itheora.php:182
+msgid ""
+"This software is like an alternative to the proprietary Flash players (file "
+"format and software), and is based on the Cortado java applet (ITheora is "
+"not a simple wrapper for Cortado), and helps the spreading of ogg/theora "
+"free (as in freedom ;) ) format."
+msgstr ""
+"This software is like an alternative to the proprietary Flash players (file "
+"format and software), and is based on the Cortado java applet (ITheora is "
+"not a simple wrapper for Cortado), and helps the spreading of ogg/theora "
+"free (as in freedom ;) ) format."
+
+#: wp-itheora.php:183
+msgid ""
+"In the same time, it allows you to be independant from online video "
+"services, such as youtube and dailymotion, because you can share the source "
+"code of the video from a blogger to another."
+msgstr ""
+"In the same time, it allows you to be independant from online video "
+"services, such as youtube and dailymotion, because you can share the source "
+"code of the video from a blogger to another."
+
+#: wp-itheora.php:184
+msgid "Theora Sea"
+msgstr "Theora Sea"
+
+#: wp-itheora.php:185
+msgid ""
+"Theora Sea is a sharing video area. This area is a simple list of links "
+"which target to hosted video, you cannot upload videos on this site. "
+"However, it make easier to generate podcast."
+msgstr ""
+"Theora Sea is a sharing video area. This area is a simple list of links "
+"which target to hosted video, you cannot upload videos on this site. "
+"However, it make easier to generate podcast."
+
+#: wp-itheora.php:187
+msgid ""
+"So you can submit videos that you host yourself, yet know that you are the "
+"unique liable of what you broadcast. Check that you respect copyright low of "
+"your country."
+msgstr ""
+"So you can submit videos that you host yourself, yet know that you are the "
+"unique liable of what you broadcast. Check that you respect copyright low of "
+"your country."
+
+
