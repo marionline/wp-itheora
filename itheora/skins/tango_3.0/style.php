@@ -484,7 +484,12 @@ if($hplay<116) { // Affichage de l'icone de partage en mode audio
 // SI IE
 // Corrections ou ajouts dans la feuille de style 
 // pour rattraper les bevues de ce stupide "Internet Explorer" 
-if (ereg("MSIE", getenv("HTTP_USER_AGENT"))) {
+/**
+ * ereg is deprecated in php 5.3 use preg_match to fix it 
+ * Old line:
+ * if (ereg("MSIE", getenv("HTTP_USER_AGENT"))) {
+ */
+if (preg_match("/MSIE/", getenv("HTTP_USER_AGENT"))) {
 
 echo '
 .big_Java, .big_VLC, .big_Wikipedia, .big_Email, .big_TS, 
@@ -519,7 +524,12 @@ table {
 	// SI IE 6
 	// Corrections ou ajouts supplementaires
 	// pour rattraper les bevues d'Internet Explorer 6
-	if (ereg("MSIE 6", getenv("HTTP_USER_AGENT"))) {// SI IE 6 
+	/**
+	 * ereg is deprecated in php 5.3 use preg_match to fix it 
+	 * Old line:
+	 * if (preg_match("/MSIE/", getenv("HTTP_USER_AGENT"))) {
+	 */
+	if (preg_match("/MSIE 6/", getenv("HTTP_USER_AGENT"))) {// SI IE 6 
 echo ' 
 .titleon { background : #ffffff; }';
 	}

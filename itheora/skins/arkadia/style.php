@@ -334,7 +334,12 @@ if($hplay<125) { // Adaptation pour l'affichage du titre en mode audio, l'affich
 // SI IE
 // Corrections ou ajouts dans la feuille de style 
 // pour rattraper les bevues de ce stupide "Internet Explorer" 
-if (ereg("MSIE", getenv("HTTP_USER_AGENT"))) {
+/**
+ * ereg is deprecated in php 5.3 use preg_match to fix it 
+ * Old line:
+ * if (ereg("MSIE", getenv("HTTP_USER_AGENT"))) {
+ */
+if (preg_match("/MSIE/", getenv("HTTP_USER_AGENT"))) {
 
 echo '
 .msg_playlist .msg, .msg_error .msg, .msg_share .msg, 
@@ -361,7 +366,12 @@ table {
 	// SI IE 6
 	// Corrections ou ajouts supplementaires
 	// pour rattraper les bevues d'Internet Explorer 6
-	if (ereg("MSIE 6", getenv("HTTP_USER_AGENT"))) {// SI IE 6 
+	/**
+	 * ereg is deprecated in php 5.3 use preg_match to fix it 
+	 * Old line:
+	 * if (preg_match("/MSIE/", getenv("HTTP_USER_AGENT"))) {
+	 */
+	if (preg_match("/MSIE 6/", getenv("HTTP_USER_AGENT"))) {// SI IE 6 
 		if($hplay<125) { // audio 
 		echo ' 
 .titleon, .titleoff { width:  '.($wvid-$hvid).'px ; }
