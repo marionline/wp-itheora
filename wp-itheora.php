@@ -80,8 +80,8 @@ class WPItheora {
 	    $document_root=WP_PLUGIN_DIR.'/'.$this->dir.'/itheora';
 	    $file_config_player .= '$document_root="'.$document_root.'";'."\n\n";
 	    
-	    $file_config_player .= '$blacklist = '."\"\"; \n";
-	    $file_config_player .= '$whitelist = '."\"\"; \n";
+	    $file_config_player .= '$blacklist = '."Array ( 0 => \"\" ); \n";
+	    $file_config_player .= '$whitelist = '."Array ( 0 => \"\" ); \n";
 	    
 	    //$old_file_config_player= fopen("config/player.php","w");
 	    $old_file_config_player= fopen($conf_itheora,"w");
