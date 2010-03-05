@@ -25,7 +25,7 @@ if(!isset($_POST['v'])) {
 <br />
 <p class="indent"><?php echo txt($c_v)?> <span style="color: red">*</span></p>
 <input type="text" name="v" size="50" maxlength="500" class="indent" <?php if($blip!="0") { echo "value=\"http://".$out1[0][1].".ogg\"";}?> />
-<p style="width : 600px;"><?php if(file_exists($document_root."/lib/neolao.swf")) {echo txt($c_vtxt1).'<br />' ;} ?><?php echo txt($c_vtxt1b)?><br /><br /><?php echo txt($c_vtxt2)?><a href="javascript:document.location='http://<?php echo $_SERVER['SERVER_NAME'].$_SERVER['SCRIPT_NAME']; ?>?url='+escape(window.location);"><?php echo txt($c_title)?></a>. <?php echo txt($c_vtxt3)?></p>
+<p style="width : 600px;"><?php if(file_exists($document_root."/lib/neolao.swf")) {echo txt($c_vtxt1).'<br />' ;} ?><?php echo txt($c_vtxt1b)?><br /></p>
 
 <p class="indent"><?php echo txt($c_n)?></p>
 <input type="text" name="n" size="50" maxlength="500" class="indent" <?php if($blip!="0") { echo "value=\"".$out2[0][1]."\"";}?> /><br /><br />
