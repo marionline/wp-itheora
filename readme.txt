@@ -4,7 +4,7 @@ Donate link: http://www.marionline.it/
 Tags: video, streaming, theora, ogg, itheora
 Requires at least: 2.5
 Tested up to: 2.9.1
-Stable tag: trunk
+Stable tag: 0.1.1
 
 == Description ==
 
@@ -30,21 +30,19 @@ The wordpress visual editor modify itheora object code: turn off the visual edit
 I'm working to resolve this problem, I want to add a special tag for itheora.
 
 == Screenshots ==
-Nothing
+1. Create player
+2. Create player: view the code and preview
 
 == Changelog ==
 =0.1=
 This is the first version, there are some bug to resolve but it work fine for me.
+=0.1.1=
+This is for me a stable version with a basic feauture. With this version I can create in a easy way an html code for my video to embended in my article, simply copy and paste the code.
 
 == Upgrade Notice ==
 Nothing to upgrade.
 
 == TODO ==
-* Need to create the different languages po files.
-* Need to test all features "Create player".
-
-Other:
-
 * Add integration to wordpress editor (need a workaround to prevent the modification of code by visual mode)
 * Add thumbnail features
 * Add tag modification features of video
@@ -53,3 +51,4 @@ Other:
 
 == FIXED ==
 * Resolve bug to fix: error when I give only the filename of a video without extension. Now work for me.
+* Wp-itheora is i18n.
