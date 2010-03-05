@@ -35,9 +35,9 @@ I'm working to resolve this problem, I want to add a special tag for itheora.
 
 == Changelog ==
 =0.1=
-This is the first version, there are some bug to resolve but it work fine for me.
+This is the first version, there are some bugs to solve but it works fine for me.
 =0.1.1=
-This is for me a stable version with a basic feauture. With this version I can create in a easy way an html code for my video to embended in my article, simply copy and paste the code.
+This is for me a stable version with a basic feature. With this version I can create in a easy way an html code for my video to embend in my article, simply copy and paste the code.
 
 == Upgrade Notice ==
 Nothing to upgrade.
