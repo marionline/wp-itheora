@@ -4,7 +4,7 @@ Donate link: http://www.marionline.it/
 Tags: video, streaming, theora, ogg, itheora
 Requires at least: 2.5
 Tested up to: 2.9.1
-Stable tag: v0.1.1
+Stable tag: v0.1.2
 
 == Description ==
 
@@ -38,6 +38,8 @@ I'm working to resolve this problem, I want to add a special tag for itheora.
 This is the first version, there are some bugs to solve but it works fine for me.
 = v0.1.1 =
 This is for me a stable version with a basic feature. With this version I can create in a easy way an html code for my video to embend in my article, simply copy and paste the code.
+= v0.1.2 =
+wp-itheora is on Wordpress Plugins Directory too, this version include little change in version name.
 
 == Upgrade Notice ==
 Nothing to upgrade.
