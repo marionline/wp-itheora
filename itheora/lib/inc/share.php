@@ -46,7 +46,7 @@ if($function_ts) {
 	$ecran_share = '
 	<div class="msg_share">
 		<div class="msg">
-			<p>'.txt($txt_url).'</p>
+			<p><a href="http://'.$ihost.$iscript.'?v='.$sv.$sn.$sd.'&out=link" onclick="window.open(this.href); return false;">'.txt($txt_url).'</a></p>
 			<div class="codebox">
 			'.$ecran_share_url.'
 			</div>

@@ -1,6 +1,6 @@
 <?php  
 // Version d'ITheora
-$itheoraversion="2.1"; 
+$itheoraversion="2.2"; 
 // Variables concernant ITheora
 /**
  * If() needed to not overwrite variable set in create_player of wp-itheora
@@ -53,7 +53,7 @@ if (isset($par)&& isset($itheora)) {
 		$par = str_replace('&', '&amp;', $par);
 	}
 	
-	// Nettoie w= et h= si correponde à la taille de la video
+	// Nettoie w= et h= si correponde ï¿½ la taille de la video
 	$par = str_replace('&amp;w='.$pars['w'], '', $par);
 	$par = str_replace('&amp;h='.$pars['h'], '', $par);
 	
@@ -124,10 +124,7 @@ if(getp('v')) {
 	if(url_exists(getp('v'), "html")) { // v est une page html
 		$video = $verror;
 	} else {
-		/**
-		 * Maybe to fix in the itheora project 
-		 */
-		$video = (strstr( getp('v') ,".")) ? getp('v') : getp('v').".ogv" ;
+		$video = (strstr( getp('v') ,".")) ? getp('v') : getp('v').".ogg" ;
 	}
 } else { 
 	$video = $verror;
@@ -294,9 +291,9 @@ $vfile_ogx = $vfile.$vext_ogx;
 // url .ogx pour tester jpg et torrent
 $vurl_ogx = $vprot.$vhost.$vpath.$vext_ogx;
 if($n==0) {
-    $vcache = $vfile_ogx;
+$vcache = $vfile_ogx;
 } else {
-    $vcache = $vurl_ogx;
+$vcache = $vurl_ogx;
 }
 
 // ----------------------------------------------------- Importation de class.ogg.php 
@@ -308,7 +305,7 @@ if(!isset($itheora))
     $itheora=$_SERVER['SCRIPT_FILENAME'];
 $Ogg=new Ogg($vcache,UTF8,dirname($itheora)."/cache");
 
-$vartist=""; $vtitle=""; $vdesc=""; $vlicence="";
+$vartist=""; $vtitle=""; $vdesc=""; $vlicense="";
 if (isset($Ogg->Streams['vorbis']['comments'])) { // Recherche infos dans tags vorbis
 	for($i=0 ; $i < count($Ogg->Streams['vorbis']['comments']); $i++ ) {
 		if(strstr($Ogg->Streams['vorbis']['comments'][$i], "ARTIST=")) {
@@ -320,8 +317,8 @@ if (isset($Ogg->Streams['vorbis']['comments'])) { // Recherche infos dans tags v
 		if(strstr($Ogg->Streams['vorbis']['comments'][$i], "DESCRIPTION=")) {
 			$vdesc=str_replace("DESCRIPTION=", "", $Ogg->Streams['vorbis']['comments'][$i]);
 		}
-		if(strstr($Ogg->Streams['vorbis']['comments'][$i], "LICENCE=")) {
-			$vlicence=str_replace("LICENCE=", "", $Ogg->Streams['vorbis']['comments'][$i]);
+		if(strstr($Ogg->Streams['vorbis']['comments'][$i], "LICENSE=")) {
+			$vlicense=str_replace("LICENSE=", "", $Ogg->Streams['vorbis']['comments'][$i]);
 		}
 	}
 }
@@ -428,6 +425,7 @@ if ($picture!='0') { // Image par p=, pas de test, l'auteur sait ce qu'il fait
 }
 
 // ----------------------------------------------------- Gestion de l'auto detection du fichier torrent
+$torrent="";
 if ($bittorrent!='0') { // pas de test, l'auteur sait ce qu'il fait
 	if(substr($bittorrent, 0, 1)!="/" && strstr($bittorrent, "tp://")){
 		$torrent="/".$bittorrent;
@@ -471,18 +469,20 @@ if(getp('out')=="xml") {
 // ------------------------------------------------------------------------------------------ //
 // -----------------------Sortie XML--------------------------------------------------- //
 // ------------------------------------------------------------------------------------------ //
-
+$vduration = isset($Ogg->Streams['duration']) ? $Ogg->Streams['duration'] : "";
+$vwidth = isset($Ogg->Streams['theora']['width']) ? $Ogg->Streams['theora']['width'] : "";
+$vheight = isset($Ogg->Streams['theora']['height']) ? $Ogg->Streams['theora']['height'] : "";
 echo '<?xml version="1.0" encoding="UTF-8"?>
-<itheora version="'.$itheoraversion.'" xmlns="http://menguy.aymeric.free.fr/theora/">
+<itheora version="'.$itheoraversion.'">
 	<video>
 		<title>'.txt($vtitle).'</title>
 		<url>'.$vogx.'</url>
 		<artist>'.txt($vartist).'</artist>
 		<description>'.txt($vdesc).'</description>
 		<license>'.txt($vlicense).'</license>
-		<duration>'.$Ogg->Streams['duration'].'</duration>
-		<width>'.$Ogg->Streams['theora']['width'].'</width>
-		<height>'.$Ogg->Streams['theora']['height'].'</height>
+		<duration>'.$vduration.'</duration>
+		<width>'.$vwidth.'</width>
+		<height>'.$vheight.'</height>
 		<picture>'.$image.'</picture>
 		<podcast>'.$torrent.'</podcast>
 	</video>
@@ -498,6 +498,16 @@ echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.or
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="'.$lg.'" lang="'.$lg.'">
 <head>
 	<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+	<link rel="stylesheet" type="text/css" media="all" href="http://'.$ihost.$ipath.'lib/scroll/scroll.css" />
+	<script type="text/javascript" src="lib/jquery.js"></script>
+	<script type="text/javascript" src="lib/scroll/scroll.js"></script>
+	<script type="text/javascript">
+		$(function() {
+		    $(".jMyCarousel").jMyCarousel({
+		        visible: \'100%\'
+		    });
+		});
+	</script>
 	<title>';
 	if ($name!='0') { echo txt($name); }
 echo '</title>
@@ -524,7 +534,7 @@ echo '</title>
 if($function_podcast) {
 	if($vhost==$ihost) { // Podcast local
 		echo '
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://'.$ihost.$ipath.'podcast.php?dir='.str_replace('/'.url_to_file($vpath), '', $vpath).'"/>';
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://'.$ihost.$ipath.'podcast.php?dir='.rtrim(str_replace(url_to_file($vpath), '', $vpath), '/').'"/>';
 	} else if ($vhost=="blip.tv") { // Podcast de blip.tv
 		$url_ex=explode('-', str_replace("http://blip.tv/file/get/", "", $vogx));
 		$username=$url_ex[0];
@@ -535,7 +545,7 @@ if($function_podcast) {
 echo '</head>
 <body>
 	<h1>';
-	if ($name!='0') { echo txt($name); $parn="&n=".$name; } else { echo txt($title); }
+	if ($name!='0') { echo txt($name); $parn="&n=".$name; } else { echo txt($title); $parn=""; }
 echo '</h1>
 	<div><br />';
 	if ($playlist!='0') { $parx="&x=".$playlist; } else { $parx=""; }
@@ -544,33 +554,9 @@ echo '</h1>
 	include ($itheora="index.php");
 	echo '
 	<br /><br />';
-if($function_podcast) {
-	if($vhost==$ihost) { // Podcast local
-		echo '
-	<div>
-	<object data="lib/scroll/index.php?url=http://'.$ihost.$ipath.'podcast.php%3Fdir='.str_replace('/'.url_to_file($vpath), '', $vpath).'" type="application/xhtml+xml" style="width:600px; height:150px;">
-	<!--[if IE]>
-		<iframe src="lib/scroll/index.php?url=http://'.$ihost.$ipath.'podcast.php%3Fdir='.str_replace('/'.url_to_file($vpath), '', $vpath).'" style="width:600px; height:150px;" allowtransparency="true" frameborder="0" >
-		</iframe>
-	<![endif]-->
-	</object>
-	</div>
-';
-	} elseif ($vhost=="blip.tv") { // Podcast de blip.tv
-		echo '
-	<div>
-	<object data="lib/scroll/index.php?url=http://'.strtolower($username).'.blip.tv/rss" type="application/xhtml+xml" style="width:600px; height:150px;">
-	<!--[if IE]>
-		<iframe src="lib/scroll/index.php?url=http://'.strtolower($username).'.blip.tv/rss" style="width:600px; height:150px;" allowtransparency="true" frameborder="0" >
-		</iframe>
-	<![endif]-->
-	</object>
-	</div>
-';	
-	}
-}	
+	include('lib/scroll/scroll.php');
 echo '
-		<p>'.$powered_by.' <a href="http://menguy.aymeric.free.fr/theora/"><img src="http://theorasea.org/itheora.png" alt="ITheora" /></a></p>
+		<p>'.$powered_by.' <a href="http://itheora.org"><img src="http://theorasea.org/itheora.png" alt="ITheora" /></a></p>
 	</div>
 </body>
 </html>
@@ -582,7 +568,7 @@ echo '
 // ------------------------------------------------------------------------------------------ //
 
 // ----------------------------------------------------- Insertion de l'entete
-echo '<!-- ITheora '.$itheoraversion.' player video ogg/theora; plus d\'informations sur http://menguy.aymeric.free.fr/theora/ -->
+echo '<!-- ITheora '.$itheoraversion.' player video ogg/theora; plus d\'informations sur http://itheora.org -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="'.$lg.'" lang="'.$lg.'">
 <head>

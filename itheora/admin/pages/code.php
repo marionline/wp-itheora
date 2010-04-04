@@ -25,7 +25,7 @@ if(!isset($_POST['v'])) {
 <br />
 <p class="indent"><?php echo txt($c_v)?> <span style="color: red">*</span></p>
 <input type="text" name="v" size="50" maxlength="500" class="indent" <?php if($blip!="0") { echo "value=\"http://".$out1[0][1].".ogg\"";}?> />
-<p style="width : 600px;"><?php if(file_exists($document_root."/lib/neolao.swf")) {echo txt($c_vtxt1).'<br />' ;} ?><?php echo txt($c_vtxt1b)?><br /></p>
+<p style="width : 600px;"><?php if(file_exists("$document_root/lib/neolao.swf")) {echo txt($c_vtxt1).'<br />' ;} ?><?php echo txt($c_vtxt1b)?><br /><br /><?php echo txt($c_vtxt2)?><a href="javascript:document.location='http://<?php echo $_SERVER['SERVER_NAME'].$_SERVER['SCRIPT_NAME']; ?>?url='+escape(window.location);"><?php echo txt($c_title)?></a>. <?php echo txt($c_vtxt3)?></p>
 
 <p class="indent"><?php echo txt($c_n)?></p>
 <input type="text" name="n" size="50" maxlength="500" class="indent" <?php if($blip!="0") { echo "value=\"".$out2[0][1]."\"";}?> /><br /><br />
@@ -83,7 +83,11 @@ closedir($dir);
 	</tr><tr>
 		<td><?php echo txt($c_l)?></td><td></td>
 		<td><select name="l" >
-<?php $rep = $document_root."/lang/"; $dir = opendir($rep); 
+<?php
+/**
+ * Fix path to work in wp-itheora 
+ */
+$rep = $document_root."/lang/"; $dir = opendir($rep); 
 /**
  * Fix to make the default language selected 
  */
@@ -166,11 +170,10 @@ echo '<h1>'.txt($c_code).'</h1>
 	';
 	$par=$vpar.$tpar.$spar.$ppar.$bpar.$npar.$dpar.$fpar.$lpar.$wpar.$hpar;
 	$itheora_code=true;
-	//location of itheora index.php
 	$itheora=WP_PLUGIN_DIR.'/wp-itheora/itheora/index.php'; //need to force to output code
 	$itheoraUrl=WP_PLUGIN_URL.'/wp-itheora/itheora/index.php';
-	//include ($itheora="$document_root."itheora/index.php"); <---Old line
-	include ($itheora);
+	include($itheora);
+	//include ($itheora="../index.php"); <---Old line
 	echo '
 	</div>';
 
@@ -178,11 +181,10 @@ echo '<h1>'.txt($c_code).'</h1>
 echo '<h1>'.txt($c_overview).'</h1>
 	<div style="margin-left: 20px;">';
 	$par=$vpar.$tpar.$spar.$ppar.$bpar.$npar.$dpar.$fpar.$lpar.$wpar.$hpar;
-	//location of itheora index.php
-	$itheora=WP_PLUGIN_DIR.'/wp-itheora/itheora/index.php'; //need to force to output Code
+	$itheora=WP_PLUGIN_DIR.'/wp-itheora/itheora/index.php'; //need to force to output code
 	$itheoraUrl=WP_PLUGIN_URL.'/wp-itheora/itheora/index.php';
+	include($itheora);
 	//include ($itheora="../index.php"); <---Old line
-	include ($itheora);
 	echo '</div>';
 }
 ?>

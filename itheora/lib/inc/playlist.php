@@ -49,7 +49,7 @@ if($function_ts) {
 	$ecran_share_playlist = '
 	<div class="msg_share">
 		<div class="msg">
-			<p>'.txt($txt_url).'</p>
+			<p><a href="http://'.$ihost.$iscript.'?v='.ep($playlist.$sn.$sd.'&out=link', 3).'" onclick="window.open(this.href); return false;">'.txt($txt_url).'</a></p>
 			<div class="codebox">
 			'.$ecran_share_playlist_url.'
 			</div>

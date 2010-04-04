@@ -85,7 +85,7 @@ if($save==txt($cp_save)) {
 	$file_blacklist = ($file_blacklist!="") ? $file_blacklist="Array ( ".substr($file_blacklist, 0, -2). " )" : 0;
 	
 	$file_whitelist="";
-	for($i=0; $i < count($new_whitelist); $i++) {
+	for($i=0; $i<count($new_whitelist); $i++) {
 		$file_whitelist = $file_whitelist.($i).' => "'.$new_whitelist[$i].'", ';
 	}
 	$file_whitelist = ($file_whitelist!="") ? $file_whitelist="Array ( ".substr($file_whitelist, 0, -2). " )" : 0;

@@ -1,6 +1,5 @@
 <?php
-$title="ITheora, I really broadcast myself";
-
+$title="ITheora, test"; 
 $function_manual_play=true;
 $function_info=true;
 $function_ts=true;
@@ -15,8 +14,8 @@ $function_error_but=true;
 $function_podcast=true;
 $function_alt_download=true;
 
-$document_root="";
+$document_root="/home/mario/public_html/pluginwordpress/wp-content/plugins/wp-itheora/itheora";
 
-$blacklist = ""; 
-$whitelist = ""; 
+$blacklist = Array ( 0 => "" ); 
+$whitelist = Array ( 0 => "" ); 
 ?>

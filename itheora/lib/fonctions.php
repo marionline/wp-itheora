@@ -170,6 +170,10 @@ function url_to_ext($url) {
 
 // Fonction pour tester l'url
 function url_exists ($url, $ext) {
+	if(strstr($url, "http://".$_SERVER['SERVER_NAME']."/") && $ext!="xml") { // if the url has the same host
+		$file=str_replace("http://".$_SERVER['SERVER_NAME'], $_SERVER['DOCUMENT_ROOT'], $url); 
+		if(!file_exists($file)) {return false;} // check if file exist locally and escape if not. Else check the url will not be a problem...
+	}
 	$handle = @fopen ($url, "r");
 	if($handle) {
 		switch ($ext) {
@@ -217,10 +221,10 @@ function h_to_s ($duration) {
 }
 
 function get_torrent ($url) {
-	if(strstr($url, $ihost)) { // Video locale
-		if(file_exists($document_root.str_replace('http://'.$ihost, '' ,$url).'.torrent')) {
+	if(strstr($url, $_SERVER['SERVER_NAME'])) { // Video locale
+		if(file_exists($_SERVER['DOCUMENT_ROOT'].str_replace('http://'.$_SERVER['SERVER_NAME'], '' ,$url).'.torrent')) {
 			$torrent = $url.".torrent";
-		} elseif(file_exists($document_root.substr(str_replace('http://'.$ihost, '' ,$url), 0, -4).'.torrent')) {
+		} elseif(file_exists($_SERVER['DOCUMENT_ROOT'].substr(str_replace('http://'.$_SERVER['SERVER_NAME'], '' ,$url), 0, -4).'.torrent')) {
 			$torrent = str_replace('.'.url_to_ext($url), '', $url).".torrent";
 		} else {
 			$torrent = "";
@@ -252,10 +256,12 @@ function get_jpg ($url) {
 		}
 	} elseif(strstr($url, "http://blip.tv/")) { // Video chez blip.tv
 		$image = $url.'.jpg';
-	} elseif(strstr($url, $ihost)) { // Video locale
-		if(file_exists($document_root.str_replace('http://'.$ihost, '' ,$url).'.jpg')) {
+	} elseif(strstr($url, "http://www.archive.org/")){ // No picture. There's a bug on archive.org (temp picture is loaded)
+		$image=false;
+	} elseif(strstr($url, $_SERVER['SERVER_NAME'])) { // Video locale
+		if(file_exists($_SERVER['DOCUMENT_ROOT'].str_replace('http://'.$_SERVER['SERVER_NAME'], '' ,$url).'.jpg')) {
 			$image = $url.'.jpg';
-		} elseif(file_exists($document_root.substr(str_replace('http://'.$ihost, '' ,$url), 0, -4).'.jpg')) {
+		} elseif(file_exists($_SERVER['DOCUMENT_ROOT'].substr(str_replace('http://'.$_SERVER['SERVER_NAME'], '' ,$url), 0, -4).'.jpg')) {
 			$image = str_replace('.'.url_to_ext($url), '', $url).".jpg";
 		} else {
 			$image=false;
@@ -297,10 +303,10 @@ function get_flv ($url) {
 				}
 			}
 		}
-	} elseif(strstr($url, $ihost)) { // Video locale
-		if(file_exists($document_root.str_replace('http://'.$ihost, '' ,$url).'.flv')) {
+	} elseif(strstr($url, $_SERVER['SERVER_NAME'])) { // Video locale
+		if(file_exists($_SERVER['DOCUMENT_ROOT'].str_replace('http://'.$_SERVER['SERVER_NAME'], '' ,$url).'.flv')) {
 			$flv = $url.".flv";
-		} elseif(file_exists($document_root.substr(str_replace('http://'.$ihost, '' ,$url), 0, -4).'.flv')) {
+		} elseif(file_exists($_SERVER['DOCUMENT_ROOT'].substr(str_replace('http://'.$_SERVER['SERVER_NAME'], '' ,$url), 0, -4).'.flv')) {
 			$flv = str_replace('.'.url_to_ext($url), '', $url).".flv";
 		} else {
 			$flv = "";
@@ -331,14 +337,16 @@ function get_first_video ($url, $ext) {
 	$masque2 = '#<title>(.*?)</title>#i';  
 	preg_match_all("$masque2",$data,$out2,PREG_SET_ORDER);
 	@fclose ($handle);
-	$out[0]="";
+	$out[0]="";$out[1]="";
 	// Scanne la liste des (x premiers) fichiers media
 	for ($i=0; $i<count($out1); $i++) { 
 		if($out[0]=="" && (substr(url_to_ext($out1[$i][1]), 0, 2)=='og')) {
 			$out[0]=$out1[$i][1];
 		} 
 	}
-	$out[1]=str_replace("]]>", "", str_replace("<![CDATA[", "", $out2[1][1]));
+	if(isset($out2[1][1])) {
+		$out[1]=str_replace("]]>", "", str_replace("<![CDATA[", "", $out2[1][1]));
+	}
 	return $out;
 }
 
