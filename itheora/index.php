@@ -103,7 +103,7 @@ if (isset($par)&& isset($itheora)) {
 //error_reporting(E_ALL);
 
 require_once ("lib/fonctions.php");
-require ("admin/config/player.php");
+include ("admin/config/player.php");
 $extra_query=get_extra_query();
 
 $time = getp('t') ? getp('t') : '0';
@@ -127,7 +127,9 @@ if(getp('v')) {
 		$video = (strstr( getp('v') ,".")) ? getp('v') : getp('v').".ogg" ;
 	}
 } else { 
-	$video = $verror;
+	// There no param v so we load the local podcast page like an home page
+	$video = 'http://'.$ihost.$ipath.'podcast.php';
+	$_GET['out']="link";
 };
 
 $wplay = getp('w') ? getp('w') : 'auto';
@@ -135,7 +137,7 @@ $hplay = getp('h') ? getp('h') : 'auto';
 if(getp('l')) {
 	$lang = getp('l');
 } else { 
-	$lang = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
+	$lang = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']) : "en";
 	$lang = substr($lang[0], 0, 2);
 }
 
