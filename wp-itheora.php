@@ -51,54 +51,29 @@ class WPItheora {
      * When the plugin is activated this function run
      */
     function wp_itheora_activation() {
-	static $conf_itheora;
-	static $conf_dir;
-	static $dir_cache;
-	$conf_itheora = WP_PLUGIN_DIR."/".$this->dir."/itheora/admin/config/player.php";
-	$conf_dir = dirname($conf_itheora);
-	$dir_cache = WP_PLUGIN_DIR."/".$this->dir."/itheora/cache";
+	/**
+	 * Add MP4 source to VideoJS?
+	 */
+	$itheora_config['MP4_source'] = true;
+	/**
+	 * Add WEBM source to VideoJS?
+	 */
+	$itheora_config['WEBM_source'] = true;
+	/**
+	 * Use VideoJS flash fallback?
+	 */
+	$itheora_config['flash_fallback'] = true;
 
-	if((file_exists($conf_itheora) && is_writable($conf_itheora)) || is_writable($conf_dir)){
-	    static $file_config_player;
-	    $file_config_player='<?php'."\n";
-	    $file_config_player .= '$title="ITheora, I really broadcast myself";'."\n\n"; 
-	    $file_config_player .= '$function_manual_play=true;'."\n"; 
-	    $file_config_player .= '$function_info=true;'."\n"; 
-	    $file_config_player .= '$function_ts=true;'."\n"; 
-	    $file_config_player .= '$function_name=true;'."\n\n"; 
-	    
-	    $file_config_player .= '$function_share=true;'."\n"; 
-	    $file_config_player .= '$function_download=true;'."\n"; 
-	    $file_config_player .= '$function_fullscreen=true;'."\n"; 
-	    $file_config_player .= '$function_options=true;'."\n\n"; 
-	    
-	    $file_config_player .= '$function_error_but=true;'."\n"; 
-	    $file_config_player .= '$function_podcast=true;'."\n"; 
-	    $file_config_player .= '$function_alt_download=true;'."\n\n"; 
-	    
-	    static $document_root;
-	    $document_root=WP_PLUGIN_DIR.'/'.$this->dir.'/itheora';
-	    $file_config_player .= '$document_root="'.$document_root.'";'."\n\n";
-	    
-	    $file_config_player .= '$blacklist = '."Array ( 0 => \"\" ); \n";
-	    $file_config_player .= '$whitelist = '."Array ( 0 => \"\" ); \n";
-	    
-	    //$old_file_config_player= fopen("config/player.php","w");
-	    $old_file_config_player= fopen($conf_itheora,"w");
-	    fwrite($old_file_config_player,$file_config_player);
-	    fclose($old_file_config_player);
-	} elseif(!file_exists($conf_dir) && !is_writable($conf_dir)) {
-	    deactivate_plugins(__FILE__);
-	    die(__("Need to make directory '$conf_dir' writeable or create a writeable '$conf_itheora' file.", $this->domain));
-	} else {
-	    deactivate_plugins(__FILE__);
-	    die(__("Need to make file '$conf_itheora' writeable.", $this->domain));
-	}
-
-	if(!is_writable($dir_cache)) {
-	    deactivate_plugins(__FILE__);
-	    die(__("Need to make cache directory '$dir_cache' writeable.", $this->domain));
-	}
+	/**
+	 * AmazonS3 config options  
+	 */
+	$itheora_config['bucket_name']    = 'media.marionline.it';
+	$itheora_config['s3_region']      = 'AmazonS3::REGION_EU_W1';
+	$itheora_config['s3_vhost']       = 'media.marionline.it';
+	$itheora_config['aws_key']        = 'Amazon web service key';
+	$itheora_config['aws_secret_key'] = 'Amazon web service secret key';
+	if(!get_option('wp_itheora_options'))
+	    update_option('wp_itheora_options', $itheora_config);
     }
 
     function wp_itheora_menu() {
@@ -108,12 +83,13 @@ class WPItheora {
 	$page = array();
 	$page[] = add_menu_page('itheora', 'itheora', $mincap, basename(__FILE__), array(&$this, 'wp_itheora_infopage'), WP_PLUGIN_URL.'/'.$this->dir.'/img/fish_theora_org.png');
 	$page[] = add_submenu_page(basename(__FILE__), __('Wordpress itheora administration', $this->domain), __('itheora info', $this->domain), $mincap, basename(__FILE__),  array(&$this, 'wp_itheora_infopage'));
-	$page[] = add_submenu_page(basename(__FILE__),__('Wordpress itheora administration', $this->domain), __('Create player', $this->domain), $mincap, 'wp-itheora/create-player',  array(&$this, 'wp_itheora_create_player'));
 	$page[] = add_submenu_page(basename(__FILE__),__('Wordpress itheora administration', $this->domain), __('Options', $this->domain), $mincap, 'wp-itheora/options',  array(&$this, 'wp_itheora_config_player'));
 	
 	for($i = 0; $i < count($page); $i++) {
 	    add_action( "admin_print_scripts-".$page[$i], array(&$this, 'wp_itheora_admin_head') );
 	}
+
+	add_action('admin_init', array(&$this, 'wp_itheora_register_settings'));
     }
 
     /**
@@ -136,26 +112,86 @@ class WPItheora {
     }
 
     /**
+     * wp_itheora_register_settings 
+     * 
+     * @access public
+     * @return void
+     */
+    function wp_itheora_register_settings() {
+	register_setting('wp_itheora-group', 'wp_itheora_options', array(&$this, 'wp_itheora_settings_validate'));
+    }
+
+    function wp_itheora_settings_validate($input) {
+	$input['MP4_source']     = ($input['MP4_source'] == 1 ? true : false);
+	$input['WEBM_source']    = ($input['WEBM_source'] == 1 ? true : false);
+	$input['flash_fallback'] = ($input['flash_fallback'] == 1 ? true : false);
+	$input['bucket_name']    = $input['bucket_name'];
+	$input['s3_region']      = ($input['s3_region'] ? $input['s3_region'] : 'AmazonS3::REGION_EU_W1');
+	$input['s3_vhost']       = $input['s3_vhost'];
+	$input['aws_key']        = ($input['aws_key'] ? wp_filter_nohtml_kses($input['aws_key']) : 'Amazon web service key');
+	$input['aws_secret_key'] = ($input['aws_secret_key'] ? wp_filter_nohtml_kses($input['aws_secret_key']) : 'Amazon web service secret key');
+	return $input;
+    }
+
+    /**
      * wp_itheora_config_player 
      * call when the user whant to config the basic settings of itheora player
      */
     function wp_itheora_config_player() {
 	$this->wp_itheora_header();
-	include('itheora_path.php');
-	require("itheora/admin/config/player.php");
-	require('itheora/admin/pages/config_player.php');
-    }
-
-    /**
-     * wp_itheora_create_player 
-     * create html code and view preview
-     */
-    function wp_itheora_create_player() {
-	$this->wp_itheora_header();
-
-	//Call create_player.php
-	include('itheora_path.php');
-	require('itheora/admin/pages/code.php'); 
+	echo '<h2>' . __('WP-itheora configuration page') . '</h2>';
+        echo '<form method="post" action="options.php">';
+	settings_fields( 'wp_itheora-group' );
+	$itheora_config = get_option('wp_itheora_options');
+	?>
+	<table>
+	    <tr> 
+		<td><?php _e('Include Mp4 source:'); ?></td>
+		<td><input type="radio" name="wp_itheora_options[MP4_source]" value="1" <?php checked(true, $itheora_config['MP4_source']); ?> /> <?php _e('Yes'); ?></td>
+		<td><input type="radio" name="wp_itheora_options[MP4_source]" value="0" <?php checked(false, $itheora_config['MP4_source']); ?> /> <?php  _e('No'); ?></td>
+	    </tr>
+	    <tr>
+		<td><?php _e('Include WebM source:'); ?></td>
+		<td><input type="radio" name="wp_itheora_options[WEBM_source]" value="1" <?php checked(true, $itheora_config['WEBM_source']); ?> /> <?php _e('Yes'); ?></td>
+		<td><input type="radio" name="wp_itheora_options[WEBM_source]" value="0" <?php checked(false, $itheora_config['WEBM_source']); ?> /> <?php  _e('No'); ?></td>
+	    </tr>
+	    <tr>
+		<td><?php _e('Use flash fallback:'); ?></td>
+		<td><input type="radio" name="wp_itheora_options[flash_fallback]" value="1" <?php checked(true, $itheora_config['flash_fallback']); ?> /> <?php _e('Yes'); ?></td>
+		<td><input type="radio" name="wp_itheora_options[flash_fallback]" value="0" <?php checked(false, $itheora_config['flash_fallback']); ?> /> <?php  _e('No'); ?></td>
+	    </tr>
+	</table>
+	    <p>
+		<?php _e('Bucket name:'); ?>
+		<input type="text" name="wp_itheora_options[bucket_name]" value="<?php echo $itheora_config['bucket_name']; ?>" />
+	    </p>
+	    <p>
+		<?php _e('Bucket region:'); ?>
+		<select name="wp_itheora_options[s3_region]">
+		    <option value="AmazonS3::REGION_US_E1">US Standard</option>
+		    <option value="AmazonS3::REGION_US_W1">US West (Northern California)</option>
+		    <option value="AmazonS3::REGION_EU_W1">EU (Ireland)</option>
+		    <option value="AmazonS3::REGION_APAC_NE1">Asia Pacific (Tokyo)</option>
+		    <option value="AmazonS3::REGION_APAC_SE1">Asia Pacific (Singapore)</option>
+		</select>
+	    </p>
+	    <p>
+		<?php _e('Set bucket virtual host:'); ?>
+		<input type="text" name="wp_itheora_options[s3_vhost]" value="<?php echo $itheora_config['s3_vhost']; ?>" />
+	    </p>
+	    <p>
+		<?php _e('Amazon Web Service Key:'); ?>
+		<input type="text" name="wp_itheora_options[aws_key]" value="<?php echo $itheora_config['aws_key']; ?>" />
+	    </p>
+	    <p>
+		<?php _e('Amazon Web Service Secret Key:'); ?>
+		<input type="text" name="wp_itheora_options[aws_secret_key]" value="<?php echo $itheora_config['aws_secret_key']; ?>" />
+	    </p>
+	    <p class="submit">
+		<input type="submit" class="button-primary" value="<?php _e('Save'); ?>" />
+	    </p>
+	    </form>
+	<?php
     }
 
     /**
