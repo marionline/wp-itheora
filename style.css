@@ -35,3 +35,11 @@ input[type=text] {
 .itheora-submit {
     width: 100px;
 }
+
+#wp-itheora-video ul {
+    list-style-type: circle;
+    list-style-position: inside;
+}
+#wp-itheora-video li {
+    padding-left: 20px;
+}

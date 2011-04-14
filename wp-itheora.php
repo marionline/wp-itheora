@@ -84,6 +84,7 @@ class WPItheora {
 	$page[] = add_menu_page('itheora', 'itheora', $mincap, basename(__FILE__), array(&$this, 'wp_itheora_infopage'), WP_PLUGIN_URL.'/'.$this->dir.'/img/fish_theora_org.png');
 	$page[] = add_submenu_page(basename(__FILE__), __('Wordpress itheora administration', $this->domain), __('itheora info', $this->domain), $mincap, basename(__FILE__),  array(&$this, 'wp_itheora_infopage'));
 	$page[] = add_submenu_page(basename(__FILE__),__('Wordpress itheora administration', $this->domain), __('Options', $this->domain), $mincap, 'wp-itheora/options',  array(&$this, 'wp_itheora_config_player'));
+	$page[] = add_submenu_page(basename(__FILE__),__('Wordpress itheora administration', $this->domain), __('Video', $this->domain), $mincap, 'wp-itheora/video',  array(&$this, 'wp_itheora_video'));
 	
 	for($i = 0; $i < count($page); $i++) {
 	    add_action( "admin_print_scripts-".$page[$i], array(&$this, 'wp_itheora_admin_head') );
@@ -121,6 +122,13 @@ class WPItheora {
 	register_setting('wp_itheora-group', 'wp_itheora_options', array(&$this, 'wp_itheora_settings_validate'));
     }
 
+    /**
+     * wp_itheora_settings_validate 
+     * validation input
+     * 
+     * @param array $input 
+     * @return array
+     */
     function wp_itheora_settings_validate($input) {
 	$input['MP4_source']     = ($input['MP4_source'] == 1 ? true : false);
 	$input['WEBM_source']    = ($input['WEBM_source'] == 1 ? true : false);
@@ -237,6 +245,126 @@ class WPItheora {
 	</div>
 	";
     } /** end wp_ithoera_infopage() */
+
+    /**
+     * wp_itheora_video 
+     * Video Administration page
+     */
+    function wp_itheora_video() {
+	$this->wp_itheora_header();
+	require_once(dirname(__FILE__) . '/itheora/lib/itheora.class.php');
+	require_once(dirname(__FILE__) . '/itheora/lib/aws-sdk/sdk.class.php');
+	$itheora_config = get_option('wp_itheora_options');
+	$itheora = new itheora();
+
+	echo '<div id="wp-itheora-video">' . PHP_EOL . '<h2>' . __('List of files saved locally') . '</h2>
+	<ul class="itheora-video-local">';
+	    $content = scandir($itheora->getVideoDir());
+            $html = '';
+	    if($content) {
+		foreach($content as $id => $item) {
+		    if( $id > 1 ) {
+			$html .= '<li class="itheora-video-name"><a href="delete.php?dir=' . $item . '" class="delete">' . __('Delete') . '</a> <strong>' . $item . ':</strong>';
+			$subcontent = scandir($itheora->getVideoDir() . '/' . $item);
+			if($subcontent) {
+			    $html .= '<ul class="itheora-local-files">';
+			    foreach($subcontent as $sub_id => $sub_item) {
+				if( $sub_id > 1 ) {
+				    $html .= '<li><a href="delete.php?file=' . $sub_item . '" class="delete">' . __('Delete') . '</a> ' . $sub_item . '</li>';
+				}
+			    }
+			    $html .= '</ul>';
+			}
+			$html .= '</li>';
+		    }
+		}
+	    }
+	    echo $html;
+	    ?>
+	</ul>
+	    <hr />
+	    <h3><?php _e('Upload File Locally'); ?></h3>
+	    <?php if(isset($error_message)) echo $error_message; ?>
+	    <form action="addfile.php" method="post" enctype="multipart/form-data">
+		<p><?php _e('Upload file'); ?>: <input type="file" name="file" /><input type="submit" name="submit" value="<?php _e('Upload'); ?>" class="button" /></p>
+	    </form>
+	    <hr />
+	<h2><?php _e('List of remote files:'); ?></h2>
+	<?php
+	    $s3 = new AmazonS3($itheora_config['aws_key'], $itheora_config['aws_secret_key']);
+	    $s3->set_region($itheora_config['s3_region']);
+	    $s3->set_vhost($itheora_config['s3_vhost']);
+	    $object_list = $s3->get_object_list($itheora_config['bucket_name']);
+	    $list = '<ul class="itheora-video-remote">' . PHP_EOL;
+	    $previus_object = '';
+	    foreach($object_list as $object) {
+
+		if( dirname($object) != dirname($previus_object) && dirname($object) != substr($previus_object, 0, -1) && $previus_object != '' )
+		    $list .= PHP_EOL . '</ul></li>' . PHP_EOL;
+		elseif( dirname($object) == '.' && $previus_object != '' )
+		    $list .= '</li>' . PHP_EOL;
+
+		if( dirname($previus_object) == '.' && dirname($object) != '.' ) {
+		    $list .= PHP_EOL . '<ul>' . PHP_EOL;
+		}
+
+		$list .= '<li><a href="delete.php?file=' . $object . '&amp;s3=true">' . __('Delete') . '</a> ' . $object;
+
+		if( dirname($object) != '.' )
+		    $list .= '</li>';
+
+		$previus_object = $object;
+	    }
+	    if( dirname($previus_object) != '.' )
+		$list .= '</ul></li>';
+	    $list .= '</ul>' . PHP_EOL . '</div>' . PHP_EOL;
+	    echo $list;
+	    
+	    $s3 = new AmazonS3($itheora_config['aws_key'], $itheora_config['aws_secret_key']);
+	    $s3->set_region($itheora_config['s3_region']);
+	    $s3->set_vhost($itheora_config['s3_vhost']);
+
+	    date_default_timezone_set('UTC');
+	    $policy = new CFPolicy($s3, array(
+		'expiration' => $s3->util->convert_date_to_iso8601(mktime(date('H')+1)),
+		'conditions' => array(
+		    array('acl' => 'public-read'),
+		    array('bucket' => $itheora_config['bucket_name']),
+		    array('starts-with', '$key', ''),
+		    array('starts-with', '$success_action_redirect', ''),
+		)
+	    ));
+	    function currentPage() {
+		$pageURL = 'http';
+		if ($_SERVER["HTTPS"] == "on")
+		    $pageURL .= "s";
+		$pageURL .= "://";
+		if ($_SERVER["SERVER_PORT"] != "80")
+		    $pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
+		else
+		    $pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
+		return $pageURL;
+	    }
+
+	    ?>
+	    <hr />
+	    <form action="http://<?php if($itheora_config['s3_vhost']) echo $itheora_config['s3_vhost']; else echo $itheora_config['bucket_name'] . '.s3.amazonaws.com' ; ?>" method="post" enctype="multipart/form-data">
+
+
+		    <p>
+		    <?php _e("Rename the file or don't change it:"); ?> <input type="text" name="key" value="${filename}" />
+		    <input type="hidden" name="acl" value="public-read" />
+		    <input type="hidden" name="success_action_redirect" value="<?php echo currentPage(); ?>" />
+		    <input type="hidden" name="AWSAccessKeyId" value="<?php echo $policy->get_key(); ?>" />
+		    <input type="hidden" name="Policy" value="<?php echo $policy->get_policy(); ?>" />
+		    <input type="hidden" name="Signature" value="<?php echo base64_encode(hash_hmac('sha1', $policy->get_policy(), $s3->secret_key, true))?>" />
+		    </p>
+		    <p><?php _e('Upload to Amazon S3'); ?>: <input type="file" name="file" /><input type="submit" name="submit" value="Upload to Amazon S3" class="button" /></p>
+	    </form>
+
+	    <?php
+
+    }
 
     /*****************************************************
      *
