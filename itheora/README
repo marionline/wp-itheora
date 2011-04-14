@@ -1,0 +1,39 @@
+REQUIREMENTS
+============
+* GD Library
+* CURL
+
+LICENSE
+=======
+
+GPL version 3
+
+EXAMPLE
+=======
+
+You can check working examples here:
+http://itheora.marionline.it/
+
+WHY THIS FORK?
+==============
+
+I want to create this project to give to wp-itheora plugin for Wordpress a
+new and update video player.
+
+The developers of official itheora project are developing the new itheora
+3.
+http://itheora.org/dev/
+http://itheora.org/en/node/164
+
+Some time ago I start a new fork of itheora version 2.
+http://itheora.org/en/node/164#comment-293
+I undestand that I should rewrite all the code to implement the new itheora
+version 2. So I decide to create this new fork.
+
+I don't see a real much activity on itheora project so I create this
+prototype of itheora version 3. I like really much video-js so I want to
+use it.
+I hope that the itheora team can use my new version of itheora-fork to
+release the new itheora version.
+
+P.S. Excuse my bad English
