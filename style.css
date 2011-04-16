@@ -36,10 +36,6 @@ input[type=text] {
     width: 100px;
 }
 
-#wp-itheora-video ul {
-    list-style-type: circle;
-    list-style-position: inside;
-}
-#wp-itheora-video li {
-    padding-left: 20px;
+.wp-itheora-table tr:hover {
+    background-color: #71B2E8;
 }
