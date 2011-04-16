@@ -36,16 +36,35 @@ class WPItheora {
     private $domain = 'wpitheora';
     private $dir;
 
+    /**
+     * __CONSTRUCT 
+     * 
+     * @access protected
+     * @return void
+     */
     function __CONSTRUCT(){
 	$this->dir = dirname(plugin_basename(__FILE__));
 	load_plugin_textdomain( $this->domain, 'wp-content/plugins/'.$this->dir.'/lang/');
     }
 
+    /**
+     * file_size 
+     * 
+     * @param mixed $size 
+     * @access private
+     * @return void
+     */
     private function file_size($size) {
 	$filesizename = array(" Bytes", " KB", " MB", " GB", " TB", " PB", " EB", " ZB", " YB");
 	return $size ? round($size/pow(1024, ($i = floor(log((double)$size, 1024)))), 2) . $filesizename[$i] : '0 Bytes';
     }
 
+    /**
+     * currentPage 
+     * 
+     * @access private
+     * @return void
+     */
     private function currentPage() {
 	$pageURL = 'http';
 	if ($_SERVER["HTTPS"] == "on")
@@ -90,6 +109,7 @@ class WPItheora {
 	$itheora_config['aws_key']        = 'Amazon web service key';
 	$itheora_config['aws_secret_key'] = 'Amazon web service secret key';
 	$itheora_config['video_dir']      = realpath(dirname(__FILE__) . '/../../../wp-content') . '/wp-itheora-data';
+	$itheora_config['video_url']      = WP_CONTENT_URL . '/wp-itheora-data';
 
 	if(!is_dir($itheora_config['video_dir']))
 	    mkdir($itheora_config['video_dir']);
@@ -98,9 +118,21 @@ class WPItheora {
 	    update_option('wp_itheora_options', $itheora_config);
     }
 
+    /**
+     * wp_itheora_deactivation 
+     * 
+     * @access public
+     * @return void
+     */
     function wp_itheora_deactivation() {
     }
 
+    /**
+     * wp_itheora_menu 
+     * 
+     * @access public
+     * @return void
+     */
     function wp_itheora_menu() {
 	//minimal capability
 	$mincap=9;
@@ -164,6 +196,8 @@ class WPItheora {
 	$input['s3_vhost']       = $input['s3_vhost'];
 	$input['aws_key']        = ($input['aws_key'] ? wp_filter_nohtml_kses($input['aws_key']) : 'Amazon web service key');
 	$input['aws_secret_key'] = ($input['aws_secret_key'] ? wp_filter_nohtml_kses($input['aws_secret_key']) : 'Amazon web service secret key');
+	$input['video_dir']      = ((substr($input['video_dir'], -1) == '/') ? substr($input['video_dir'], 0, -1) : $input['video_dir']);
+	$input['video_url']      = ((substr($input['video_url'], -1) == '/') ? substr($input['video_url'], 0, -1) : $input['video_url']);
 	return $input;
     }
 
@@ -224,6 +258,10 @@ class WPItheora {
 	    <p>
 		<?php _e('Set local video directory:'); ?>
 		<input type="text" name="wp_itheora_options[video_dir]" value="<?php echo $itheora_config['video_dir']; ?>" />
+	    </p>
+	    <p>
+		<?php _e('Change video Url:'); ?>
+		<input type="text" name="wp_itheora_options[video_url]" value="<?php echo $itheora_config['video_url']; ?>" />
 	    </p>
 	    <p class="submit">
 		<input type="submit" class="button-primary" value="<?php _e('Save'); ?>" />
@@ -320,6 +358,55 @@ class WPItheora {
     }
 
     /**
+     * rrmdir 
+     * Remove directory and his content recursive
+     * 
+     * @param mixed $dir 
+     * @access private
+     * @return void
+     */
+    private function rrmdir($dir) {
+	if (is_dir($dir)) {
+	    $objects = scandir($dir);
+	    foreach ($objects as $object) {
+		if ($object != "." && $object != "..") {
+		    if (filetype($dir."/".$object) == "dir") $this->rrmdir($dir."/".$object); else unlink($dir."/".$object);
+		}
+	    }
+	    reset($objects);
+	    rmdir($dir);
+	}
+	return;
+    }
+
+    /**
+     * deleteLocal 
+     * Delete local file
+     * 
+     * @param mixed $itheora 
+     * @access private
+     * @return void
+     */
+    private function deleteLocal(&$itheora) {
+	    $local_file = basename($_GET['deleteLocal']);
+	    if(isset($_GET['parentdir']))
+		$parentdir = basename($_GET['parentdir']);
+	    else
+		$parentdir = false;
+
+	    if($parentdir)
+		$to_be_remove = $itheora->getVideoDir() . '/' . $parentdir . '/' . $local_file;
+	    else
+		$to_be_remove = $itheora->getVideoDir() . '/' . $local_file;
+
+	    if(is_dir($to_be_remove))
+		$this->rrmdir($to_be_remove);
+	    else {
+		unlink($to_be_remove);
+	    }
+    }
+
+    /**
      * wp_itheora_video 
      * Video Administration page
      */
@@ -339,21 +426,19 @@ class WPItheora {
 
 	// Check if we do some other action from filemanager
 	if(isset($_GET['deleteLocal'])){
-	    $local_file = basename($_GET['deleteLocal']);
-	    if(isset($_GET['parentdir']))
-		$parentdir = basename($_GET['parentdir']);
-	    else
-		$parentdir = false;
-
-	    if($parentdir)
-		unlink($itheora->getVideoDir() . '/' . $parentdir . '/' . $local_file);
-	    else
-		unlink($itheora->getVideoDir() . '/' . $local_file);
+	    // Delete local file
+	    $this->deleteLocal($itheora);
 	}
 	if(isset($_GET['deleteObject'])) {
+	    // Delete object
 	    $s3->delete_object($itheora_config['bucket_name'], $_GET['deleteObject']);
+	} elseif(isset($_GET['deletePrefix'])) {
+	    // Delete all object with provided prefix
+	    $results = $s3->delete_all_objects( $itheora_config['bucket_name'], '/' . str_replace('/', '\/', $_GET['deletePrefix']) . '.*/' );
 	}
 	    ?>
+	    <!-- START LOCAL FILE TABLE -->
+
 	    <table class="widefat fixed wp-itheora-table" cellspacing="0">
 		<thead>
 		    <tr>
@@ -412,6 +497,7 @@ class WPItheora {
 	    echo $html;
 	    ?>
 	    </table>
+	    <!-- END LOCAL FILE TABLE -->
 	    <hr />
 	    <h3><?php _e('Upload File Locally'); ?></h3>
 	    <?php if(isset($error_message)) echo $error_message; ?>
@@ -424,6 +510,7 @@ class WPItheora {
 	    $object_list = $s3->get_object_list($itheora_config['bucket_name']);
 	    $objects = $s3->list_objects($itheora_config['bucket_name'], array('delimiter' => '/'));
 	    ?>
+	    <!-- START AMAZON S3 TABLE -->
 	    <table class="widefat fixed wp-itheora-table" cellspacing="0">
 		<thead>
 		    <tr>
@@ -431,6 +518,7 @@ class WPItheora {
 			<th><?php echo __('Size', $this->domain); ?></th>
 			<th><?php echo __('Actions', $this->domain); ?></th>
 			<th><?php echo __('Reduce redundacy storage', $this->domain); ?></th>
+			<th><?php echo __('Public', $this->domain); ?></th>
 		    </tr>
 		</thead>
 		<tfoot>
@@ -439,6 +527,7 @@ class WPItheora {
 			<th><?php echo __('Size', $this->domain); ?></th>
 			<th><?php echo __('Actions', $this->domain); ?></th>
 			<th><?php echo __('Reduce redundacy storage', $this->domain); ?></th>
+			<th><?php echo __('Public', $this->domain); ?></th>
 		    </tr>
 		</tfoot>
 	    <?php
@@ -457,7 +546,7 @@ class WPItheora {
 		<tr>
 		    <td><strong><?php echo $object->Prefix; ?></strong></td>
 		    <td> - </td>
-		    <td class="wp-itheora-row-actions"><a href=""><?php _e('Rename'); ?></a> - <a href=""><?php _e('Delete'); ?></a></td>
+		    <td class="wp-itheora-row-actions"><a href=""><?php _e('Rename'); ?></a> - <a onclick="return showNotice.warn();" href="<?php echo $this->currentPage() . '&amp;deletePrefix=' . $object->Prefix; ?>"><?php _e('Delete'); ?></a></td>
 		    <td class="wp-itheora-row-storagetype"> - </td>
 		</tr>
 		<?php
@@ -487,6 +576,7 @@ class WPItheora {
 		)
 	    ));
 	    ?>
+	    <!-- END AMAZON S3 TABLE -->
 	    <hr />
 	    <form action="http://<?php if($itheora_config['s3_vhost']) echo $itheora_config['s3_vhost']; else echo $itheora_config['bucket_name'] . '.s3.amazonaws.com' ; ?>" method="post" enctype="multipart/form-data">
 

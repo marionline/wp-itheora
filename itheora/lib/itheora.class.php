@@ -15,6 +15,7 @@ class itheora {
     protected $_videoErrorName = 'error';
     protected $_videoStoreDir;
     protected $_baseUrl;
+    protected $_videoUrl;
     protected $_files = array();
     protected $_externalVideo = false; // Is set external video?
     protected $_externalUrl = ''; // External video URL if video is not locally
@@ -54,6 +55,7 @@ class itheora {
 	$this->_baseUrl = strtolower(substr($_SERVER['SERVER_PROTOCOL'], 0, 5)) == 'https://' ? 'https://' : 'http://' 
 	    . $_SERVER['HTTP_HOST']
 	    . pathinfo($_SERVER['PHP_SELF'], PATHINFO_DIRNAME);
+	$this->_videoUrl = $this->_baseUrl . '/video';
 
 	// Start cache
 	$frontendOptions = array(
@@ -95,7 +97,7 @@ class itheora {
 	if($this->_externalVideo){
 	    return $this->_externalUrl . $file;
 	} else {
-	    return $this->_baseUrl . '/video/' . $this->_videoName . '/' . $file;
+	    return $this->_videoUrl . '/' . $this->_videoName . '/' . $file;
 	}
     }
 
@@ -412,6 +414,26 @@ class itheora {
      */
     public function getBaseUrl() {
 	return $this->_baseUrl;
+    }
+
+    /**
+     * setVideoUrl 
+     * 
+     * @access public
+     * @return string
+     */
+    public function setVideoUrl($videoUrl) {
+	$this->_videoUrl = $videoUrl;
+    }
+
+    /**
+     * getVideoUrl 
+     * 
+     * @access public
+     * @return string
+     */
+    public function getVideoUrl() {
+	return $this->_videoUrl;
     }
 
     /**

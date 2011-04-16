@@ -55,8 +55,9 @@ if(isset($_GET['r'])){
     $itheora = new itheora(60, null, $s3, $itheora_config);
 } else {
     $itheora = new itheora();
+    $itheora->setVideoDir($itheora_config['video_dir']);
+    $itheora->setVideoUrl($itheora_config['video_url']);
 }
-$itheora->setVideoDir($itheora_config['video_dir']);
 if(isset($video))
     $itheora->setVideoName($video);
 else
