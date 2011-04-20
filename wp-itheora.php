@@ -33,9 +33,11 @@ License: GPL version 3
  *****************************************************/
 class WPItheora {
 
-	private $wsh_raw_parts=array();
-	private $domain = 'wpitheora';
-	private $dir;
+	private $_wsh_raw_parts=array();
+	private $_domain = 'wpitheora';
+	private $_dir;
+
+	protected $_itheora_config;
 
 	/**
 	 * __CONSTRUCT 
@@ -44,8 +46,12 @@ class WPItheora {
 	 * @return void
 	 */
 	function __CONSTRUCT() {
-		$this->dir = dirname(plugin_basename(__FILE__));
-		load_plugin_textdomain( $this->domain, 'wp-content/plugins/'.$this->dir.'/lang/');
+		$this->_dir = dirname(plugin_basename(__FILE__));
+		load_plugin_textdomain( $this->_domain, 'wp-content/plugins/'.$this->_dir.'/lang/');
+
+		// Retrive itheora_config
+		$this->_itheora_config = get_option( 'wp_itheora_options' );
+
 	}
 
 	/**
@@ -67,15 +73,47 @@ class WPItheora {
 	 * @return void
 	 */
 	private function currentPage() {
-	$pageURL = 'http';
-	if ($_SERVER["HTTPS"] == "on")
-	    $pageURL .= "s";
-	$pageURL .= "://";
-	if ($_SERVER["SERVER_PORT"] != "80")
-	    $pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
-	else
-	    $pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
-	return $pageURL;
+		$pageURL = 'http';
+		if ($_SERVER["HTTPS"] == "on")
+			$pageURL .= "s";
+		$pageURL .= "://";
+		if ($_SERVER["SERVER_PORT"] != "80")
+			$pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
+		else
+			$pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
+		return $pageURL;
+	}
+
+	/**
+	 * getAmazonS3 
+	 * 
+	 * @access protected
+	 * @return AmazonS3 object
+	 */
+	protected function getAmazonS3() {
+		require_once( dirname( __FILE__ ) . '/itheora/lib/aws-sdk/sdk.class.php' );
+
+		// Create AmazonS3 object
+		$s3 = new AmazonS3( $this->_itheora_config['aws_key'], $this->_itheora_config['aws_secret_key'] );
+		$s3->set_region( $this->_itheora_config['s3_region'] );
+		$s3->set_vhost( $this->_itheora_config['s3_vhost'] );
+
+		return $s3;
+	}
+
+	/**
+	 * getItheora 
+	 * 
+	 * @access protected
+	 * @return itheora object
+	 */
+	protected function getItheora() {
+		require_once( dirname( __FILE__ ) . '/itheora/lib/itheora.class.php' );
+
+		$itheora = new itheora();
+		$itheora->setVideoDir( $this->_itheora_config['video_dir'] );
+
+		return $itheora;
 	}
 
 	function itheora_admin() {
@@ -140,22 +178,23 @@ class WPItheora {
 		$mincap=9;
 
 		$page = array();
-		$page[] = add_menu_page('itheora', 'itheora', $mincap, basename(__FILE__), array(&$this, 'wp_itheora_infopage'), WP_PLUGIN_URL.'/'.$this->dir.'/img/fish_theora_org.png');
-		$page[] = add_submenu_page(basename(__FILE__), __('Wordpress itheora administration', $this->domain), __('itheora info', $this->domain), $mincap, basename(__FILE__),  array(&$this, 'wp_itheora_infopage'));
-		$page[] = add_submenu_page(basename(__FILE__),__('Wordpress itheora administration', $this->domain), __('Options', $this->domain), $mincap, 'wp-itheora/options',  array(&$this, 'wp_itheora_config_player'));
-		$page[] = add_submenu_page(basename(__FILE__),__('Wordpress itheora administration', $this->domain), __('Video', $this->domain), $mincap, 'wp-itheora/video',  array(&$this, 'wp_itheora_video'));
+		$page[] = add_menu_page('itheora', 'itheora', $mincap, basename(__FILE__), array(&$this, 'wp_itheora_infopage'), WP_PLUGIN_URL.'/'.$this->_dir.'/img/fish_theora_org.png');
+		$page[] = add_submenu_page(basename(__FILE__), __('Wordpress itheora administration', $this->_domain), __('itheora info', $this->_domain), $mincap, basename(__FILE__),  array(&$this, 'wp_itheora_infopage'));
+		$page[] = add_submenu_page(basename(__FILE__),__('Wordpress itheora administration', $this->_domain), __('Options', $this->_domain), $mincap, 'wp-itheora/options',  array(&$this, 'wp_itheora_config_player'));
+		$page[] = add_submenu_page(basename(__FILE__),__('Wordpress itheora administration', $this->_domain), __('Video', $this->_domain), $mincap, 'wp-itheora/video',  array(&$this, 'wp_itheora_video'));
 
 		for($i = 0; $i < count($page); $i++) {
 			add_action( "admin_print_scripts-".$page[$i], array(&$this, 'wp_itheora_admin_head') );
 		}
 		add_action('admin_print_scripts-'.$page[3], array(&$this, 'ajax_change_reduce_redundacy'));
 		add_action('admin_print_scripts-'.$page[3], array(&$this, 'ajax_edit_local_file'));
+		add_action('admin_print_scripts-'.$page[3], array(&$this, 'ajax_object_metadata'));
 
-		add_action('admin_init', array(&$this, 'wp_itheora_register_settings'));
+		add_action( 'admin_init', array( &$this, 'wp_itheora_register_settings' ) );
 
 		// Include this jQuery library
 		wp_enqueue_script('jquery-ui-dialog');
-		wp_enqueue_style('wp-itheora-ui-stylesheet', WP_PLUGIN_URL . '/' . $this->dir . '/css/smoothness/jquery-ui-1.8.11.custom.css' );
+		wp_enqueue_style('wp-itheora-ui-stylesheet', WP_PLUGIN_URL . '/' . $this->_dir . '/css/smoothness/jquery-ui-1.8.11.custom.css' );
 	}
 
 	/**
@@ -163,7 +202,7 @@ class WPItheora {
 	 * my stylesheet for wp-itheora section
 	 */
 	function wp_itheora_admin_head() {
-		echo "<link rel='stylesheet' href='".WP_PLUGIN_URL."/".$this->dir."/style.css' type='text/css'/>";
+		echo "<link rel='stylesheet' href='".WP_PLUGIN_URL."/".$this->_dir."/style.css' type='text/css'/>";
 	}
 
 	/**
@@ -172,8 +211,8 @@ class WPItheora {
 	 */
 	protected function wp_itheora_header() {
 		echo "\n<div class=\"itheora-admin\">\n";
-		echo "<img src=\"".WP_PLUGIN_URL."/".$this->dir."/img/titre.jpg\" alt=\"\" />\n";
-		echo "<img src=\"".WP_PLUGIN_URL."/".$this->dir."/img/logo.png\" alt=\"\" />\n";
+		echo "<img src=\"".WP_PLUGIN_URL."/".$this->_dir."/img/titre.jpg\" alt=\"\" />\n";
+		echo "<img src=\"".WP_PLUGIN_URL."/".$this->_dir."/img/logo.png\" alt=\"\" />\n";
 		echo "</div>\n";
 	}
 
@@ -184,7 +223,7 @@ class WPItheora {
 	 * @return void
 	 */
 	function wp_itheora_register_settings() {
-		register_setting('wp_itheora-group', 'wp_itheora_options', array(&$this, 'wp_itheora_settings_validate'));
+		register_setting( 'wp_itheora-group', 'wp_itheora_options', array( &$this, 'wp_itheora_settings_validate' ) );
 	}
 
 	/**
@@ -216,31 +255,30 @@ class WPItheora {
 	function wp_itheora_config_player() {
 		$this->wp_itheora_header();
 		echo '<h2>' . __( 'WP-itheora configuration page' ) . '</h2>';
-		settings_fields( 'wp_itheora-group' );
-		$itheora_config = get_option( 'wp_itheora_options' );
 		?>
 		<form method="post" action="options.php">
+			<?php settings_fields( 'wp_itheora-group' ); ?>
 			<table>
 				<tr> 
 					<td><?php _e( 'Include Mp4 source:' ); ?></td>
-					<td><input type="radio" name="wp_itheora_options[MP4_source]" value="1" <?php checked( true, $itheora_config['MP4_source'] ); ?> /> <?php _e( 'Yes' ); ?></td>
-					<td><input type="radio" name="wp_itheora_options[MP4_source]" value="0" <?php checked( false, $itheora_config['MP4_source'] ); ?> /> <?php  _e( 'No' ); ?></td>
+					<td><input type="radio" name="wp_itheora_options[MP4_source]" value="1" <?php checked( true, $this->_itheora_config['MP4_source'] ); ?> /> <?php _e( 'Yes' ); ?></td>
+					<td><input type="radio" name="wp_itheora_options[MP4_source]" value="0" <?php checked( false, $this->_itheora_config['MP4_source'] ); ?> /> <?php  _e( 'No' ); ?></td>
 				</tr>
 				<tr>
 					<td><?php _e( 'Include WebM source:' ); ?></td>
-					<td><input type="radio" name="wp_itheora_options[WEBM_source]" value="1" <?php checked( true, $itheora_config['WEBM_source'] ); ?> /> <?php _e( 'Yes' ); ?></td>
-					<td><input type="radio" name="wp_itheora_options[WEBM_source]" value="0" <?php checked( false, $itheora_config['WEBM_source'] ); ?> /> <?php  _e( 'No' ); ?></td>
+					<td><input type="radio" name="wp_itheora_options[WEBM_source]" value="1" <?php checked( true, $this->_itheora_config['WEBM_source'] ); ?> /> <?php _e( 'Yes' ); ?></td>
+					<td><input type="radio" name="wp_itheora_options[WEBM_source]" value="0" <?php checked( false, $this->_itheora_config['WEBM_source'] ); ?> /> <?php  _e( 'No' ); ?></td>
 				</tr>
 				<tr>
 					<td><?php _e( 'Use flash fallback:' ); ?></td>
-					<td><input type="radio" name="wp_itheora_options[flash_fallback]" value="1" <?php checked( true, $itheora_config['flash_fallback'] ); ?> /> <?php _e( 'Yes' ); ?></td>
-					<td><input type="radio" name="wp_itheora_options[flash_fallback]" value="0" <?php checked( false, $itheora_config['flash_fallback'] ); ?> /> <?php  _e( 'No' ); ?></td>
+					<td><input type="radio" name="wp_itheora_options[flash_fallback]" value="1" <?php checked( true, $this->_itheora_config['flash_fallback'] ); ?> /> <?php _e( 'Yes' ); ?></td>
+					<td><input type="radio" name="wp_itheora_options[flash_fallback]" value="0" <?php checked( false, $this->_itheora_config['flash_fallback'] ); ?> /> <?php  _e( 'No' ); ?></td>
 				</tr>
 
 			</table>
 				<p>
 					<?php _e( 'Bucket name:' ); ?>
-					<input type="text" name="wp_itheora_options[bucket_name]" value="<?php echo $itheora_config['bucket_name']; ?>" />
+					<input type="text" name="wp_itheora_options[bucket_name]" value="<?php echo $this->_itheora_config['bucket_name']; ?>" />
 				</p>
 				<p>
 					<?php _e( 'Bucket region:' ); ?>
@@ -254,23 +292,23 @@ class WPItheora {
 				</p>
 				<p>
 					<?php _e( 'Set bucket virtual host:' ); ?>
-					<input type="text" name="wp_itheora_options[s3_vhost]" value="<?php echo $itheora_config['s3_vhost']; ?>" />
+					<input type="text" name="wp_itheora_options[s3_vhost]" value="<?php echo $this->_itheora_config['s3_vhost']; ?>" />
 				</p>
 				<p>
 					<?php _e( 'Amazon Web Service Key:' ); ?>
-					<input type="text" name="wp_itheora_options[aws_key]" value="<?php echo $itheora_config['aws_key']; ?>" />
+					<input type="text" name="wp_itheora_options[aws_key]" value="<?php echo $this->_itheora_config['aws_key']; ?>" />
 				</p>
 				<p>
 					<?php _e( 'Amazon Web Service Secret Key:' ); ?>
-					<input type="text" name="wp_itheora_options[aws_secret_key]" value="<?php echo $itheora_config['aws_secret_key']; ?>" />
+					<input type="text" name="wp_itheora_options[aws_secret_key]" value="<?php echo $this->_itheora_config['aws_secret_key']; ?>" />
 				</p>
 				<p>
 					<?php _e( 'Set local video directory:' ); ?>
-					<input type="text" name="wp_itheora_options[video_dir]" value="<?php echo $itheora_config['video_dir']; ?>" />
+					<input type="text" name="wp_itheora_options[video_dir]" value="<?php echo $this->_itheora_config['video_dir']; ?>" />
 				</p>
 				<p>
 					<?php _e( 'Change video Url:' ); ?>
-					<input type="text" name="wp_itheora_options[video_url]" value="<?php echo $itheora_config['video_url']; ?>" />
+					<input type="text" name="wp_itheora_options[video_url]" value="<?php echo $this->_itheora_config['video_url']; ?>" />
 				</p>
 				<p class="submit">
 					<input type="submit" class="button-primary" value="<?php _e( 'Save' ); ?>" />
@@ -288,65 +326,40 @@ class WPItheora {
 		echo "
 		<div id=\"wp-itheora-info\">
 			<h1>ITheora</h1>
-			<p>".__("ITheora is a PHP script allowing you to broadcast ogg/theora/vorbis only videos (and audios) files. It's simple to install and use. It may suit the usual blogger or the expert webmaster.", $this->domain)."</p>
+			<p>".__("ITheora is a PHP script allowing you to broadcast ogg/theora/vorbis only videos (and audios) files. It's simple to install and use. It may suit the usual blogger or the expert webmaster.", $this->_domain)."</p>
 
-			<p>".__("Itheora is different from other software allowing to stream videos, because it offers other features for the user visiting the website:", $this->domain)."</p>
+			<p>".__("Itheora is different from other software allowing to stream videos, because it offers other features for the user visiting the website:", $this->_domain)."</p>
 			<ul>
-			<li>".__("choose between watching videos in an embedded player (much like a flash player), and watch the video in your favorite media player (using a plugin)", $this->domain)."</li>
-			<li>".__("download the video file", $this->domain)."</li>
-			<li>".__("share the video by using the HTML source code available", $this->domain)."</li>
-			<li>".__("display in full screen mode", $this->domain)."</li>
-			<li>".__("very quick display of the video.", $this->domain)."</li>
+			<li>".__("choose between watching videos in an embedded player (much like a flash player), and watch the video in your favorite media player (using a plugin)", $this->_domain)."</li>
+			<li>".__("download the video file", $this->_domain)."</li>
+			<li>".__("share the video by using the HTML source code available", $this->_domain)."</li>
+			<li>".__("display in full screen mode", $this->_domain)."</li>
+			<li>".__("very quick display of the video.", $this->_domain)."</li>
 
 			</ul>
-			<p>".__("Itheora has real improvements for the webmaster :", $this->domain)."</p>
+			<p>".__("Itheora has real improvements for the webmaster :", $this->_domain)."</p>
 			<ul>
-			<li>".__("displaying a thumbnail when the player is being launched", $this->domain)."</li>
-			<li>".__("almost complete interface customisation (skins, options, and languages)", $this->domain)."</li>
-			<li>".__("very simple XHTML-compliant code, easy to configure", $this->domain)."</li>
-			<li>".__("download possible by peer-to-peer (Bittorrent or Coral)", $this->domain)."</li>
-			<li>".__("streaming in real time and playing external videos (on an other server with http or ftp protocol)", $this->domain)."</li>
-			<li>".__("playlist (free format .xspf) or ogg podcast can be used", $this->domain)."</li>
-			<li>".__("support the html5 tag video", $this->domain)."</li>
+			<li>".__("displaying a thumbnail when the player is being launched", $this->_domain)."</li>
+			<li>".__("almost complete interface customisation (skins, options, and languages)", $this->_domain)."</li>
+			<li>".__("very simple XHTML-compliant code, easy to configure", $this->_domain)."</li>
+			<li>".__("download possible by peer-to-peer (Bittorrent or Coral)", $this->_domain)."</li>
+			<li>".__("streaming in real time and playing external videos (on an other server with http or ftp protocol)", $this->_domain)."</li>
+			<li>".__("playlist (free format .xspf) or ogg podcast can be used", $this->_domain)."</li>
+			<li>".__("support the html5 tag video", $this->_domain)."</li>
 
-			<li>".__("a code generator make easier the configuration", $this->domain)."</li>
-			<li>".__("fall back on flash is possible", $this->domain)."</li>
+			<li>".__("a code generator make easier the configuration", $this->_domain)."</li>
+			<li>".__("fall back on flash is possible", $this->_domain)."</li>
 			</ul>
-			<h1>".__("You can tube, but I theora", $this->domain)."</h1>
-			<p>".__("This software is like an alternative to the proprietary Flash players (file format and software), and is based on the Cortado java applet (ITheora is not a simple wrapper for Cortado), and helps the spreading of ogg/theora free (as in freedom ;) ) format.", $this->domain)."</p>
-			<p>".__("In the same time, it allows you to be independant from online video services, such as youtube and dailymotion, because you can share the source code of the video from a blogger to another.", $this->domain)."</p>
-			<h1>".__("Theora Sea", $this->domain)."</h1>
-			<p>".__("Theora Sea is a sharing video area. This area is a simple list of links which target to hosted video, you cannot upload videos on this site. However, it make easier to generate podcast.", $this->domain)."</p>
-			<p style=\"text-align: center\"><a href=\"http://theorasea.org\"><img src=\"".WP_PLUGIN_URL."/".$this->dir."/img/logo.png\" alt=\"\" /></a></p>
-			<p>".__("So you can submit videos that you host yourself, yet know that you are the unique liable of what you broadcast. Check that you respect copyright low of your country.", $this->domain)."</p>
+			<h1>".__("You can tube, but I theora", $this->_domain)."</h1>
+			<p>".__("This software is like an alternative to the proprietary Flash players (file format and software), and is based on the Cortado java applet (ITheora is not a simple wrapper for Cortado), and helps the spreading of ogg/theora free (as in freedom ;) ) format.", $this->_domain)."</p>
+			<p>".__("In the same time, it allows you to be independant from online video services, such as youtube and dailymotion, because you can share the source code of the video from a blogger to another.", $this->_domain)."</p>
+			<h1>".__("Theora Sea", $this->_domain)."</h1>
+			<p>".__("Theora Sea is a sharing video area. This area is a simple list of links which target to hosted video, you cannot upload videos on this site. However, it make easier to generate podcast.", $this->_domain)."</p>
+			<p style=\"text-align: center\"><a href=\"http://theorasea.org\"><img src=\"".WP_PLUGIN_URL."/".$this->_dir."/img/logo.png\" alt=\"\" /></a></p>
+			<p>".__("So you can submit videos that you host yourself, yet know that you are the unique liable of what you broadcast. Check that you respect copyright low of your country.", $this->_domain)."</p>
 		</div>
 		";
 	} /** end wp_ithoera_infopage() */
-
-	/**
-	 * ajax_change_reduce_redundacy 
-	 * 
-	 * @access public
-	 * @return void
-	 */
-	function ajax_change_reduce_redundacy() {
-	?>
-		<script type="text/javascript">
-			function change_redundancy(value) {
-				var data = {
-				action: 'change_reduce_redundacy',
-				s3object: value
-				};
-
-				jQuery.post(ajaxurl, data, function(response) {
-				if(!response) {
-					alert('Impossible to change redundacy storage type.');
-				}
-				});
-			}
-		</script>
-	<?php
-	}
 
 	/**
 	 * ajax_edit_local_file 
@@ -355,20 +368,22 @@ class WPItheora {
 	 * @return void
 	 */
 	function ajax_edit_local_file() {
-		?>
+	 	?>
 		<script type="text/javascript">
 
-			function edit_local_file(value, obj, dir) {
-				var data = {
+ 			function edit_local_file(value, obj, dir) {
+ 				var data = {
 					action   : 'edit_local_file',
 					filename : value
 				};
 
 				jQuery.post(ajaxurl, data, function(response) {
+
 					jQuery('#'+obj.id).append(response);
 
 					jQuery('#wp-itheora-edit-form').dialog({
-						autoOpen : false,
+						autoOpen : true,
+						modal    : true,
 						title    : '<?php _e('Edit'); ?> : ' + value,
 						buttons  : {
 							'OK': function() {
@@ -385,13 +400,9 @@ class WPItheora {
 										alert(newresponse);
 								});
 							}
-						}
+						},
+						close    : function() { jQuery('#wp-itheora-edit-form').remove() }
 					});
-
-					if(jQuery('#wp-itheora-edit-form').dialog('isOpen') == true)
-						jQuery('#wp-itheora-edit-form').dialog('close');
-					else
-						jQuery('#wp-itheora-edit-form').dialog('open');
 				});
 
 				return false;
@@ -415,10 +426,9 @@ class WPItheora {
 				echo __( 'The new name containe invalid character or space.' );
 			} else {
 				// Rename the file, if is a directory rename directory and all files inside
-				$itheora_config = get_option( 'wp_itheora_options' );
-				$directory = $itheora_config['video_dir'] . '/' . $_POST['filename'];
+				$directory = $this->_itheora_config['video_dir'] . '/' . $_POST['filename'];
 				if( is_dir( $directory ) ) {
-					$newdirectory = $itheora_config['video_dir'] . '/' . $_POST['newname'];
+					$newdirectory = $this->_itheora_config['video_dir'] . '/' . $_POST['newname'];
 					rename( $directory, $newdirectory );
 					$objects = scandir( $newdirectory );
 					foreach ( $objects as $object ) {
@@ -427,7 +437,7 @@ class WPItheora {
 						}
 					}
 				} else {
-					$directory = $itheora_config['video_dir'] . '/' . $_POST['dirname'];
+					$directory = $this->_itheora_config['video_dir'] . '/' . $_POST['dirname'];
 					$file =  $directory . '/' . $_POST['filename'];
 					$newfile = $directory . '/' . $_POST['newname'];
 					rename( $file, $newfile );
@@ -437,7 +447,7 @@ class WPItheora {
 		} else {
 			// response with the form
 			?>
-			<div id="wp-itheora-edit-form" class="ui-dialog">
+			<div id="wp-itheora-edit-form">
 				<p><?php _e( 'Renaming the directory will rename all the inside files.' ); ?></p>
 				<p><?php _e( 'Renaming a file and will not be the same name of the directory name can\'t be use by itheora3-fork.' ); ?></p>
 				<form>
@@ -453,27 +463,309 @@ class WPItheora {
 	}
 
 	/**
+	 * ajax_change_reduce_redundacy 
+	 * 
+	 * @access public
+	 * @return void
+	 */
+	function ajax_change_reduce_redundacy() {
+	?>
+		<script type="text/javascript">
+			function change_redundancy(value,obj) {
+				var data = {
+					action: 'change_reduce_redundacy',
+					s3object: value
+				};
+
+				jQuery('#'+obj.id).append('<div id="wp-itheora-storage-info"></div>');
+
+				jQuery('#wp-itheora-storage-info').dialog({
+						autoOpen : true,
+						title    : '<?php _e( 'Wait response...' ); ?>',
+						open     : function() {
+							jQuery('#wp-itheora-storage-info').append('<img id="wp-itheora-storage-info-gif" style="margin-left: 45%;" src="<?php echo WP_PLUGIN_URL . '/' . $this->_dir . '/img/progress.gif'; ?>" />');
+						},
+						close    : function() { jQuery('#wp-itheora-storage-info').remove() }
+				});
+ 
+				jQuery.post(ajaxurl, data, function(response) {
+					if(!response) {
+						jQuery('#wp-itheora-storage-info').text('<?php _e( 'Impossible to change redundacy storage type.' ); ?>');
+					} else {
+						jQuery('#wp-itheora-storage-info').text('<?php _e( 'Storage class type change successfully.' ); ?>');
+					}
+					jQuery('#wp-itheora-storage-info').append('<p style="text-align: right" id="wp-itheora-storage-button"><button type="button" class="ui-state-default ui-corner-all"><?php _e( 'Close' ); ?></button></p>'); 
+					jQuery('#wp-itheora-storage-button').click(function(){ jQuery('#wp-itheora-storage-info').dialog('close'); });
+				});
+			}
+		</script>
+	<?php
+	}
+
+	/**
 	 * change_reduce_redundacy 
 	 * 
 	 * @access public
 	 * @return void
 	 */
 	function change_reduce_redundacy() {
-		require_once( dirname( __FILE__ ) . '/itheora/lib/aws-sdk/sdk.class.php' );
-
-		// Retrive itheora_config
-		$itheora_config = get_option( 'wp_itheora_options' );
-
-		// Create AmazonS3 object
-		$s3 = new AmazonS3( $itheora_config['aws_key'], $itheora_config['aws_secret_key'] );
-		$s3->set_region( $itheora_config['s3_region'] );
-		$s3->set_vhost( $itheora_config['s3_vhost'] );
-		$object = $s3->get_object_metadata( $itheora_config['bucket_name'], $_POST['s3object'] );
+		$s3 = $this->getAmazonS3();
+		$object = $s3->get_object_metadata( $this->_itheora_config['bucket_name'], $_POST['s3object'] );
 
 		if( $object['StorageClass'] == 'STANDARD' )
-			$response = $s3->change_storage_redundancy ( $itheora_config['bucket_name'], $_POST['s3object'], AmazonS3::STORAGE_REDUCED ); 
+			$response = $s3->change_storage_redundancy ( $this->_itheora_config['bucket_name'], $_POST['s3object'], AmazonS3::STORAGE_REDUCED ); 
 		else
-			$response = $s3->change_storage_redundancy ( $itheora_config['bucket_name'], $_POST['s3object'], AmazonS3::STORAGE_STANDARD ); 
+			$response = $s3->change_storage_redundancy ( $this->_itheora_config['bucket_name'], $_POST['s3object'], AmazonS3::STORAGE_STANDARD ); 
+
+		if( $response->isOK() )
+			echo true;
+		else
+			echo false;
+
+		die;
+	}
+
+	/**
+	 * array_search_value 
+	 * Take from: http://www.php.net/manual/en/function.array-search.php#92991
+	 * with a fix
+	 * 
+	 * @param mixed $needle 
+	 * @param array $haystack 
+	 * @param boolean $arraykey 
+	 * @access private
+	 * @return key_id | false on failure
+	 */
+	private function array_search_value( $needle, $haystack, $arraykey = false ) {
+		foreach( $haystack as $current_key => $value ) {
+
+			if( $arraykey ){
+
+				if( $needle == $value[$arraykey] ){
+					return $current_key;
+				}
+
+				if( is_array( $value[$arraykey] ) ) {
+					if( $this->array_search_value( $needle, $value[$arraykey] ) == true ) {
+						return $current_key;
+					}
+				}
+
+			}else{
+
+				if( $needle == $value )
+					return $value;
+
+				if( is_array( $value[$arraykey] ) ) {
+					if( $this->array_search_value( $needle, $value ) == true ) {
+						return $current_key;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * ajax_object_metadata 
+	 * 
+	 * @access public
+	 * @return void
+	 */
+	function ajax_object_metadata() {
+	?>
+		<script type="text/javascript">
+			function object_metadata(value, obj) {
+				var data = {
+					action   : 'get_object_metadata',
+					s3object : value
+				};
+
+				jQuery.post(ajaxurl, data, function(response) {
+
+					jQuery('#'+obj.id).append(response);
+
+					jQuery('#wp-itheora-object-metadata').dialog({
+						autoOpen : true,
+						modal    : true,
+						title    : '<?php _e('Edit'); ?> : ' + value,
+						width    : '600px',
+						buttons  : {
+							'<?php _e('Close'); ?>': function() {
+								jQuery('#wp-itheora-object-metadata').dialog('close');
+								jQuery('#wp-itheora-object-metadata').remove();
+							}
+						},
+						close    : function() { 
+							jQuery('#wp-itheora-object-metadata').remove();
+							jQuery('#wp-itheora-alert').remove();
+						},
+						open     : function() {
+							jQuery('#wp-itheora-object-metadata').append('<div id="wp-itheora-alert"></div>');
+						}
+					});
+
+					jQuery('#wp-itheora-alert').dialog({
+							autoOpen : false,
+							title    : '<?php _e( 'Wait response...' ); ?>',
+							open     : function() {
+								jQuery('#wp-itheora-alert').append('<img id="wp-itheora-alert-gif" style="margin-left: 45%;" src="<?php echo WP_PLUGIN_URL . '/' . $this->_dir . '/img/progress.gif'; ?>" />');
+							},
+							close    : function() {
+								jQuery('#wp-itheora-alert').text('');
+								jQuery('#wp-itheora-alert').dialog('option', 'buttons', { });
+							}
+					});
+
+					jQuery('.wp-itheora-object-acl').click(function() {
+						var acldata = {
+							action   : 'set_object_metadata',
+							s3object : value,
+							acl      : jQuery('input:radio[name=wp-itheora-object-acl]:checked').val()
+						};
+						jQuery('#wp-itheora-alert').dialog('open');
+						jQuery.post(ajaxurl, acldata, function(aclresponse) {
+
+							if(!aclresponse) {
+								jQuery('#wp-itheora-alert').text('<?php _e( 'Error on change acl rule, impossible to do that.' ); ?>');
+							} else {
+								jQuery('#wp-itheora-alert').text('<?php _e( 'ACL property change successfully.' ); ?>');
+							}
+							jQuery('#wp-itheora-alert').append('<p style="text-align: right" id="wp-itheora-button"><button type="button" class="ui-state-default ui-corner-all"><?php _e( 'Ok' ); ?></button></p>'); 
+							jQuery('#wp-itheora-button').click(function(){ jQuery('#wp-itheora-alert').dialog('close'); });
+						});
+					});
+
+					jQuery('#wp-itheora-object-content-type-button').click(function(event) {
+						event.preventDefault();
+						var ctdata = {
+							action      : 'set_object_metadata',
+							s3object    : value,
+							ContentType : jQuery('#wp-itheora-object-content-type').val()
+						};
+						jQuery('#wp-itheora-alert').dialog('open');
+						jQuery.post(ajaxurl, ctdata, function(ctresponse) {
+							if(!ctresponse) {
+								jQuery('#wp-itheora-alert').text('<?php _e( 'Error on change Content Type, impossible to do that.' ); ?>');
+							} else {
+								jQuery('#wp-itheora-alert').text('<?php _e( 'Content Type change correctly. Please check the access of your file.' ); ?>');
+							}
+							jQuery('#wp-itheora-alert').append('<p style="text-align: right" id="wp-itheora-button"><button type="button" class="ui-state-default ui-corner-all"><?php _e( 'Close' ); ?></button></p>'); 
+							jQuery('#wp-itheora-button').click(function(){ jQuery('#wp-itheora-alert').dialog('close'); });
+						});
+					});
+					jQuery('#wp-itheora-object-change-key-button').click(function(event) {
+						event.preventDefault();
+						var keydata = {
+							action   : 'set_object_metadata',
+							s3object : value,
+							key      : jQuery('#wp-itheora-object-change-key').val()
+						};
+						jQuery('#wp-itheora-alert').dialog('open');
+						jQuery.post(ajaxurl, keydata, function(ctresponse) {
+							if(!ctresponse) {
+								jQuery('#wp-itheora-alert').text('<?php _e( 'Error on change the object name, impossible to do that.' ); ?>');
+								jQuery('#wp-itheora-alert').append('<p style="text-align: right" id="wp-itheora-button"><button type="button" class="ui-state-default ui-corner-all"><?php _e( 'Ok' ); ?></button></p>'); 
+								jQuery('#wp-itheora-button').click(function(){ jQuery('#wp-itheora-alert').dialog('close'); });
+							} else {
+								jQuery('#wp-itheora-alert').text('<?php _e( 'Action complete, the page will be reload in 5 seconds' ); ?>');
+								setTimeout('location.reload()',5000);
+							}
+						});
+					});
+
+				});
+				return false;
+			}
+		</script>
+	<?php
+	}
+
+	/**
+	 * get_object_metadata 
+	 * 
+	 * @access public
+	 * @return void
+	 */
+	function get_object_metadata() {
+		$s3 = $this->getAmazonS3();
+		$filename = trim( $_POST['s3object'] );
+		$object = $s3->get_object_metadata( $this->_itheora_config['bucket_name'], $filename );
+		$public_acl_id = $this->array_search_value( 'http://acs.amazonaws.com/groups/global/AllUsers', $object['ACL'], 'id' );
+		?>
+		<div id="wp-itheora-object-metadata">
+			<form>
+				<fieldset>
+					<label for="wp-itheora-object-acl"><?php _e( 'Make this file public readable:' ); ?></label>
+					<input type="radio" name="wp-itheora-object-acl" id="wp-itheora-object-acl-1" class="wp-itheora-object-acl radio ui-widget-content ui-corner-all" value="1" <?php checked( 'READ', $object['ACL'][$public_acl_id]['permission'] ); ?> ><?php _e( 'Yes' ); ?></input>
+					<input type="radio" name="wp-itheora-object-acl" id="wp-itheora-object-acl-0" class="wp-itheora-object-acl radio ui-widget-content ui-corner-all" value="0" <?php if( $public_acl_id === false ) echo 'checked="checked" '; ?>><?php _e( 'No' ); ?></input>
+					<br />
+					<label for="wp-itheora-object-content-type"><?php _e( 'Change the content type:' ); ?></label>
+					<input type="text" name="wp-itheora-object-content-type" id="wp-itheora-object-content-type" class="wp-itheora-object-content-type text ui-widget-content ui-corner-all" value="<?php echo $object['ContentType']; ?>" />
+					<button class="button" id="wp-itheora-object-content-type-button"><?php _e( 'Change' ); ?></button>
+					<br />
+					<label for="wp-itheora-object-change-key"><?php _e( 'Rename or move the file:' ); ?></label>
+					<input type="text" name="wp-itheora-object-change-key" id="wp-itheora-object-change-key" class="wp-itheora-object-change-key text ui-widget-content ui-corner-all" value="<?php echo $object['Key']; ?>" />
+					<button class="button" id="wp-itheora-object-change-key-button"><?php _e( 'Rename/Move' ); ?></button>
+				</fieldset>
+			</form>
+			<p><?php _e( 'The owner of this file is:' ); ?> <?php echo $object['Owner']['DisplayName']; ?></p>
+		</div>
+		<?php
+		die;
+	}
+
+	/**
+	 * set_object_metadata 
+	 * 
+	 * @access public
+	 * @return void
+	 */
+	function set_object_metadata() {
+		$s3 = $this->getAmazonS3();
+		$filename = trim( $_POST['s3object'] );
+
+		if( isset( $_POST['acl'] ) ) {
+
+			if( $_POST['acl'] )
+
+				$response = $s3->set_object_acl( $this->_itheora_config['bucket_name'], $filename, AmazonS3::ACL_PUBLIC );
+
+			else
+
+				$response = $s3->set_object_acl( $this->_itheora_config['bucket_name'], $filename, AmazonS3::ACL_PRIVATE );
+
+		} elseif( isset( $_POST['ContentType'] ) ) {
+
+			$response = $s3->change_content_type( $this->_itheora_config['bucket_name'], $filename, trim( $_POST['ContentType'] ) );
+
+		} elseif( isset( $_POST['key'] ) ) {
+			$key = trim( $_POST['key'] );
+
+			if( $s3->if_object_exists( $this->_itheora_config['bucket_name'], $key ) ) {
+				echo false;
+				die;
+			} else {
+				$response = $s3->copy_object(
+					array ( 
+						'bucket'   => $this->_itheora_config['bucket_name'],
+						'filename' => $filename
+					),
+					array (
+						'bucket'   => $this->_itheora_config['bucket_name'],
+						'filename' => $key
+					),
+					array( 
+						'metadataDirective' => 'COPY',
+						'storage'           => AmazonS3::STORAGE_REDUCED
+					)
+				);
+				// If ok, delete old object
+				if( $response->isOK() )
+					$response = $s3->delete_object( $this->_itheora_config['bucket_name'], $filename );
+			}
+
+		}
 
 		if( $response->isOK() )
 			echo true;
@@ -542,20 +834,11 @@ class WPItheora {
 		// Set WP-itheora head
 		$this->wp_itheora_header();
 
-		require_once( dirname( __FILE__ ) . '/itheora/lib/itheora.class.php' );
-		require_once( dirname( __FILE__ ) . '/itheora/lib/aws-sdk/sdk.class.php' );
-
-		// Retrive itheora_config
-		$itheora_config = get_option( 'wp_itheora_options' );
-
 		// Create itheora object
-		$itheora = new itheora();
-		$itheora->setVideoDir( $itheora_config['video_dir'] );
+		$itheora = $this->getItheora();
 
 		// Create AmazonS3 object
-		$s3 = new AmazonS3( $itheora_config['aws_key'], $itheora_config['aws_secret_key'] );
-		$s3->set_region( $itheora_config['s3_region'] );
-		$s3->set_vhost( $itheora_config['s3_vhost'] );
+		$s3 = $this->getAmazonS3();
 
 		// Check if we do some other action from filemanager
 		if( isset( $_GET['deleteLocal'] ) ) {
@@ -564,10 +847,10 @@ class WPItheora {
 		}
 		if( isset( $_GET['deleteObject'] ) ) {
 			// Delete object
-			$s3->delete_object( $itheora_config['bucket_name'], $_GET['deleteObject'] );
+			$s3->delete_object( $this->_itheora_config['bucket_name'], $_GET['deleteObject'] );
 		} elseif( isset( $_GET['deletePrefix'] ) ) {
 			// Delete all object with provided prefix
-			$results = $s3->delete_all_objects(  $itheora_config['bucket_name'], '/' . str_replace( '/', '\/', $_GET['deletePrefix'] ) . '.*/' );
+			$results = $s3->delete_all_objects(  $this->_itheora_config['bucket_name'], '/' . str_replace( '/', '\/', $_GET['deletePrefix'] ) . '.*/' );
 		}
 		?>
 
@@ -575,16 +858,16 @@ class WPItheora {
 		<table class="widefat fixed wp-itheora-table" cellspacing="0">
 			<thead>
 				<tr>
-					<th><?php echo __( 'File', $this->domain ); ?></th>
-					<th><?php echo __( 'Size', $this->domain ); ?></th>
-					<th><?php echo __( 'Actions', $this->domain ); ?></th>
+					<th><?php echo __( 'File', $this->_domain ); ?></th>
+					<th><?php echo __( 'Size', $this->_domain ); ?></th>
+					<th><?php echo __( 'Actions', $this->_domain ); ?></th>
 				</tr>
 			</thead>
 			<tfoot>
 				<tr>
-					<th><?php echo __( 'File', $this->domain ); ?></th>
-					<th><?php echo __( 'Size', $this->domain ); ?></th>
-					<th><?php echo __( 'Actions', $this->domain ); ?></th>
+					<th><?php echo __( 'File', $this->_domain ); ?></th>
+					<th><?php echo __( 'Size', $this->_domain ); ?></th>
+					<th><?php echo __( 'Actions', $this->_domain ); ?></th>
 				</tr>
 			</tfoot>
 			<tbody>
@@ -643,36 +926,36 @@ class WPItheora {
 		<hr />
 		<h2><?php _e( 'List of remote files:' ); ?></h2>
 		<?php
-			$object_list = $s3->get_object_list( $itheora_config['bucket_name'] );
-			$objects = $s3->list_objects( $itheora_config['bucket_name'], array( 'delimiter' => '/' ) );
+			$object_list = $s3->get_object_list( $this->_itheora_config['bucket_name'] );
+			$objects = $s3->list_objects( $this->_itheora_config['bucket_name'], array( 'delimiter' => '/' ) );
 		?>
 		<!-- START AMAZON S3 TABLE -->
 		<table class="widefat fixed wp-itheora-table" cellspacing="0">
 			<thead>
 				<tr>
-					<th><?php echo __( 'File', $this->domain ); ?></th>
-					<th><?php echo __( 'Size', $this->domain ); ?></th>
-					<th><?php echo __( 'Last modify', $this->domain ); ?></th>
-					<th><?php echo __( 'Actions', $this->domain ); ?></th>
-					<th><?php echo __( 'Reduce redundacy storage', $this->domain ); ?></th>
+					<th><?php echo __( 'File', $this->_domain ); ?></th>
+					<th><?php echo __( 'Size', $this->_domain ); ?></th>
+					<th><?php echo __( 'Last modify', $this->_domain ); ?></th>
+					<th><?php echo __( 'Actions', $this->_domain ); ?></th>
+					<th><?php echo __( 'Reduce redundacy storage', $this->_domain ); ?></th>
 				</tr>
 			</thead>
 			<tfoot>
 				<tr>
-					<th><?php echo __( 'File', $this->domain ); ?></th>
-					<th><?php echo __( 'Size', $this->domain ); ?></th>
-					<th><?php echo __( 'Last modify', $this->domain ); ?></th>
-					<th><?php echo __( 'Actions', $this->domain ); ?></th>
-					<th><?php echo __( 'Reduce redundacy storage', $this->domain ); ?></th>
+					<th><?php echo __( 'File', $this->_domain ); ?></th>
+					<th><?php echo __( 'Size', $this->_domain ); ?></th>
+					<th><?php echo __( 'Last modify', $this->_domain ); ?></th>
+					<th><?php echo __( 'Actions', $this->_domain ); ?></th>
+					<th><?php echo __( 'Reduce redundacy storage', $this->_domain ); ?></th>
 				</tr>
 			</tfoot>
 			<?php foreach( $objects->body->Contents as $object ) : ?>
 				<tr>
-					<td><a href="http://<?php if( $itheora_config['vhost'] != '' ) { echo $itheora_config['vhost']; } else { echo $itheora_config['bucket_name']; } echo '/' . $object->Key; ?>"><?php echo $object->Key; ?></a></td>
+					<td><a href="http://<?php if( $this->_itheora_config['vhost'] != '' ) { echo $this->_itheora_config['vhost']; } else { echo $this->_itheora_config['bucket_name']; } echo '/' . $object->Key; ?>"><?php echo $object->Key; ?></a></td>
 					<td><?php echo $this->file_size( $object->Size ); ?></td>
 					<td><?php echo date_i18n( 'r', strtotime( $object->LastModified ), true ); ?></td>
-					<td class="wp-itheora-row-actions"><a href=""><?php _e( 'Edit' ); ?></a> - <a onclick="return showNotice.warn();" href="<?php echo $this->currentPage() . '&amp;deleteObject=' . $object->Key; ?>"><?php _e( 'Delete' ); ?></a></td>
-					<td class="wp-itheora-row-storagetype"><input onclick="change_redundancy('<?php echo $object->Key; ?>');" type="checkbox" value="<?php echo $object->Key; ?>" <?php checked( 'REDUCED_REDUNDANCY', $object->StorageClass); ?> /></td>
+					<td class="wp-itheora-row-actions"><a id="<?php echo str_replace( array( ' ', '.', '/', ), '-' , $object->Key ) ; ?>" onclick="return object_metadata(' <?php echo $object->Key ;?>', this)" href=""><?php _e( 'Edit' ); ?></a> - <a onclick="return showNotice.warn();" href="<?php echo $this->currentPage() . '&amp;deleteObject=' . $object->Key; ?>"><?php _e( 'Delete' ); ?></a></td>
+					<td class="wp-itheora-row-storagetype"><input id="wp-itheora-row-storagetype<?php echo str_replace(array('.', ' ', '/'), '-', $object->Key); ?>" onclick="change_redundancy('<?php echo $object->Key; ?>', this);" type="checkbox" value="<?php echo $object->Key; ?>" <?php checked( 'REDUCED_REDUNDANCY', $object->StorageClass); ?> /></td>
 				</tr>
 			<?php endforeach; ?>
 
@@ -681,18 +964,18 @@ class WPItheora {
 					<td><strong><?php echo $object->Prefix; ?></strong></td>
 					<td> - </td>
 					<td> - </td>
-					<td class="wp-itheora-row-actions"><a href=""><?php _e( 'Edit' ); ?></a> - <a onclick="return showNotice.warn();" href="<?php echo $this->currentPage() . '&amp;deletePrefix=' . $object->Prefix; ?>"><?php _e( 'Delete' ); ?></a></td>
+					<td class="wp-itheora-row-actions"><a id="<?php echo str_replace( array( ' ', '.', '/', ), '-' , $object->Prefix ) ; ?>" onclick="return object_metadata(' <?php echo $object->Prefix ;?>', this)" href=""><?php _e( 'Edit' ); ?></a> - <a onclick="return showNotice.warn();" href="<?php echo $this->currentPage() . '&amp;deletePrefix=' . $object->Prefix; ?>"><?php _e( 'Delete' ); ?></a></td>
 					<td class="wp-itheora-row-storagetype"> - </td>
 				</tr>
-				<?php $sub_objects = $s3->list_objects( $itheora_config['bucket_name'], array( 'prefix' => $object->Prefix ) ); ?>
+				<?php $sub_objects = $s3->list_objects( $this->_itheora_config['bucket_name'], array( 'prefix' => $object->Prefix ) ); ?>
 				   <?php foreach( $sub_objects->body->Contents as $sub_object ) : ?>
 						<?php if( strcmp( $sub_object->Key, $object->Prefix ) != 0 ) : ?>
 						<tr>
-							<td><a href="http://<?php if( $itheora_config['vhost'] != '' ) { echo $itheora_config['vhost']; } else { echo $itheora_config['bucket_name']; } echo '/' . $sub_object->Key; ?>"><?php echo str_replace( $object->Prefix, '', $sub_object->Key ); ?></a></td>
+							<td><a href="http://<?php if( $this->_itheora_config['vhost'] != '' ) { echo $this->_itheora_config['vhost']; } else { echo $this->_itheora_config['bucket_name']; } echo '/' . $sub_object->Key; ?>"><?php echo str_replace( $object->Prefix, '', $sub_object->Key ); ?></a></td>
 							<td><?php echo $this->file_size( $sub_object->Size ); ?></td>
 							<td><?php echo date_i18n( 'r', strtotime( $object->LastModified ), true ); ?></td>
-							<td class="wp-itheora-row-actions"><a href=""><?php _e( 'Edit' ); ?></a> - <a onclick="return showNotice.warn();" href="<?php echo $this->currentPage() . '&amp;deleteObject=' . $sub_object->Key; ?>"><?php _e( 'Delete' ); ?></a></td>
-							<td class="wp-itheora-row-storagetype"><input onclick="change_redundancy('<?php echo $sub_object->Key; ?>');" type="checkbox" value="<?php echo $sub_object->Key; ?>" <?php checked( 'REDUCED_REDUNDANCY', $sub_object->StorageClass ); ?> /></td>
+							<td class="wp-itheora-row-actions"><a id="<?php echo str_replace( array( ' ', '.', '/', ), '-' , $sub_object->Key ) ; ?>" onclick="return object_metadata(' <?php echo $sub_object->Key ;?>', this)" href=""><?php _e( 'Edit' ); ?></a> - <a onclick="return showNotice.warn();" href="<?php echo $this->currentPage() . '&amp;deleteObject=' . $sub_object->Key; ?>"><?php _e( 'Delete' ); ?></a></td>
+							<td class="wp-itheora-row-storagetype"><input id="wp-itora-row-storagetype<?php echo str_replace(array('.', ' ', '/'), '-', $sub_object->Key); ?>" onclick="change_redundancy('<?php echo $sub_object->Key; ?>',this);" type="checkbox" value="<?php echo $sub_object->Key; ?>" <?php checked( 'REDUCED_REDUNDANCY', $sub_object->StorageClass ); ?> /></td>
 						</tr>
 						<?php endif; ?>
 					<?php endforeach; ?>
@@ -706,7 +989,7 @@ class WPItheora {
 				'expiration' => $s3->util->convert_date_to_iso8601( '+1 hour' ),
 				'conditions' => array(
 					array( 'acl' => 'public-read' ),
-					array( 'bucket' => $itheora_config['bucket_name'] ),
+					array( 'bucket' => $this->_itheora_config['bucket_name'] ),
 					array( 'starts-with', '$key', '' ),
 					array( 'starts-with', '$success_action_redirect', '' ),
 				)
@@ -714,7 +997,7 @@ class WPItheora {
 		?>
 
 		<hr />
-		<form action="http://<?php if( $itheora_config['s3_vhost'] ) echo $itheora_config['s3_vhost']; else echo $itheora_config['bucket_name'] . '.s3.amazonaws.com' ; ?>" method="post" enctype="multipart/form-data">
+		<form action="http://<?php if( $this->_itheora_config['s3_vhost'] ) echo $this->_itheora_config['s3_vhost']; else echo $this->_itheora_config['bucket_name'] . '.s3.amazonaws.com' ; ?>" method="post" enctype="multipart/form-data">
 
 
 			<p>
@@ -785,8 +1068,8 @@ class WPItheora {
 				$content = substr( $text, $content_start,$fin-$content_start );
 				
 				//Store the content and replace it with a marker
-				$this->wsh_raw_parts[]=$content;
-				$replacement = "!ITHEORABLOCK".( count( $this->wsh_raw_parts )-1 )."!";
+				$this->_wsh_raw_parts[]=$content;
+				$replacement = "!ITHEORABLOCK".( count( $this->_wsh_raw_parts )-1 )."!";
 				$text = substr_replace( $text, $replacement, $start, $fin+strlen( $end_tag )-$start );
 				
 				//Have we reached the end of the string yet?
@@ -807,7 +1090,7 @@ class WPItheora {
 	 * @return void
 	 */
 	protected function wp_itheora_insertion_callback( $matches ) {
-		return $this->wsh_raw_parts[intval( $matches[1] )];
+		return $this->_wsh_raw_parts[intval( $matches[1] )];
 	}
 
 	/**
@@ -818,7 +1101,7 @@ class WPItheora {
 	 * @return string
 	 */
 	function wp_itheora_insert_exclusions( $text ) {
-		if( !isset( $this->wsh_raw_parts ) ) 
+		if( !isset( $this->_wsh_raw_parts ) ) 
 			return $text;
 	    return preg_replace_callback( "/!ITHEORABLOCK(\d+?)!/", array( &$this, "wp_itheora_insertion_callback" ), $text );
 	}
@@ -844,6 +1127,8 @@ add_action( 'init', array( &$WPItheora, 'itheora_admin' ) );
 if( is_admin() ) {
 	add_action( 'wp_ajax_change_reduce_redundacy', array( &$WPItheora, 'change_reduce_redundacy' ) );
 	add_action( 'wp_ajax_edit_local_file', array( &$WPItheora, 'edit_local_file' ) );
+	add_action( 'wp_ajax_get_object_metadata', array( &$WPItheora, 'get_object_metadata' ) );
+	add_action( 'wp_ajax_set_object_metadata', array( &$WPItheora, 'set_object_metadata' ) );
 }
 
 add_filter( 'the_content', array( &$WPItheora, 'wp_itheora_exclusions' ), 2 );
