@@ -186,9 +186,8 @@ class WPItheora {
 		for($i = 0; $i < count($page); $i++) {
 			add_action( "admin_print_scripts-".$page[$i], array(&$this, 'wp_itheora_admin_head') );
 		}
-		add_action('admin_print_scripts-'.$page[3], array(&$this, 'ajax_change_reduce_redundacy'));
 		add_action('admin_print_scripts-'.$page[3], array(&$this, 'ajax_local_file'));
-		add_action('admin_print_scripts-'.$page[3], array(&$this, 'ajax_object_metadata'));
+		add_action('admin_print_scripts-'.$page[3], array(&$this, 'ajax_object_amazon'));
 
 		add_action( 'admin_init', array( &$this, 'wp_itheora_register_settings' ) );
 
@@ -421,12 +420,13 @@ class WPItheora {
 						sub_item : sub_item
 					};
 
-				jQuery.post(ajaxurl, data, function(delete_response) {
-					if(delete_response == true)
-						location.reload();
-					else
-						alert(delete_response);
-				});
+				if(showNotice.warn()==true)
+					jQuery.post(ajaxurl, data, function(delete_response) {
+						if(delete_response == true)
+							location.reload();
+						else
+							alert(delete_response);
+					});
 
 				return false;
 			}
@@ -483,46 +483,6 @@ class WPItheora {
 			<?php
 		}
 		die;
-	}
-
-	/**
-	 * ajax_change_reduce_redundacy 
-	 * 
-	 * @access public
-	 * @return void
-	 */
-	function ajax_change_reduce_redundacy() {
-	?>
-		<script type="text/javascript">
-			function change_redundancy(value,obj) {
-				var data = {
-					action: 'change_reduce_redundacy',
-					s3object: value
-				};
-
-				jQuery('#'+obj.id).append('<div id="wp-itheora-storage-info"></div>');
-
-				jQuery('#wp-itheora-storage-info').dialog({
-						autoOpen : true,
-						title    : '<?php _e( 'Wait response...' ); ?>',
-						open     : function() {
-							jQuery('#wp-itheora-storage-info').append('<img id="wp-itheora-storage-info-gif" style="margin-left: 45%;" src="<?php echo WP_PLUGIN_URL . '/' . $this->_dir . '/img/progress.gif'; ?>" />');
-						},
-						close    : function() { jQuery('#wp-itheora-storage-info').remove() }
-				});
- 
-				jQuery.post(ajaxurl, data, function(response) {
-					if(!response) {
-						jQuery('#wp-itheora-storage-info').text('<?php _e( 'Impossible to change redundacy storage type.' ); ?>');
-					} else {
-						jQuery('#wp-itheora-storage-info').text('<?php _e( 'Storage class type change successfully.' ); ?>');
-					}
-					jQuery('#wp-itheora-storage-info').append('<p style="text-align: right" id="wp-itheora-storage-button"><button type="button" class="ui-state-default ui-corner-all"><?php _e( 'Close' ); ?></button></p>'); 
-					jQuery('#wp-itheora-storage-button').click(function(){ jQuery('#wp-itheora-storage-info').dialog('close'); });
-				});
-			}
-		</script>
-	<?php
 	}
 
 	/**
@@ -590,12 +550,12 @@ class WPItheora {
 	}
 
 	/**
-	 * ajax_object_metadata 
+	 * ajax_object_amazon 
 	 * 
 	 * @access public
 	 * @return void
 	 */
-	function ajax_object_metadata() {
+	function ajax_object_amazon() {
 	?>
 		<script type="text/javascript">
 			function object_metadata(value, obj) {
@@ -700,6 +660,57 @@ class WPItheora {
 				});
 				return false;
 			}
+
+			function change_redundancy(value,obj) {
+				var data = {
+					action: 'change_reduce_redundacy',
+					s3object: value
+				};
+
+				jQuery('#'+obj.id).append('<div id="wp-itheora-storage-info"></div>');
+
+				jQuery('#wp-itheora-storage-info').dialog({
+						autoOpen : true,
+						title    : '<?php _e( 'Wait response...' ); ?>',
+						open     : function() {
+							jQuery('#wp-itheora-storage-info').append('<img id="wp-itheora-storage-info-gif" style="margin-left: 45%;" src="<?php echo WP_PLUGIN_URL . '/' . $this->_dir . '/img/progress.gif'; ?>" />');
+						},
+						close    : function() { jQuery('#wp-itheora-storage-info').remove() }
+				});
+ 
+				jQuery.post(ajaxurl, data, function(response) {
+					if(!response) {
+						jQuery('#wp-itheora-storage-info').text('<?php _e( 'Impossible to change redundacy storage type.' ); ?>');
+					} else {
+						jQuery('#wp-itheora-storage-info').text('<?php _e( 'Storage class type change successfully.' ); ?>');
+					}
+					jQuery('#wp-itheora-storage-info').append('<p style="text-align: right" id="wp-itheora-storage-button"><button type="button" class="ui-state-default ui-corner-all"><?php _e( 'Close' ); ?></button></p>'); 
+					jQuery('#wp-itheora-storage-button').click(function(){ jQuery('#wp-itheora-storage-info').dialog('close'); });
+				});
+			}
+
+			function delete_object(value, prefix) {
+				if(prefix==undefined )
+					var data = {
+						action: 'delete_object',
+						deleteObject: value
+					};
+				else
+					var data = {
+						action: 'delete_object',
+						deletePrefix: value
+					};
+
+				if(showNotice.warn()==true)
+					jQuery.post(ajaxurl, data, function(response) {
+						if(response==true)
+							location.reload();
+						else
+							alert(response);
+					});
+
+				return false;
+			}
 		</script>
 	<?php
 	}
@@ -799,6 +810,33 @@ class WPItheora {
 	}
 
 	/**
+	 * delete_object 
+	 * 
+	 * @access public
+	 * @return void
+	 */
+	function delete_object() {
+		// Create AmazonS3 object
+		$s3 = $this->getAmazonS3();
+
+		if( isset( $_POST['deleteObject'] ) ) {
+			// Delete object
+			$response = $s3->delete_object( $this->_itheora_config['bucket_name'], $_POST['deleteObject'] );
+			$results = $response->isOK();
+		} elseif( isset( $_POST['deletePrefix'] ) ) {
+			// Delete all object with provided prefix
+			$results = $s3->delete_all_objects(  $this->_itheora_config['bucket_name'], '/' . str_replace( '/', '\/', $_POST['deletePrefix'] ) . '.*/' );
+		}
+
+		if($results)
+			echo true;
+		else
+			echo __( 'An error occours on object deletion' );
+
+		die;
+	}
+
+	/**
 	 * rrmdir 
 	 * Remove directory and his content recursive
 	 * 
@@ -859,6 +897,13 @@ class WPItheora {
 		die;
 	}
 
+	/**
+	 * addfile 
+	 * Add file to local server from upload form
+	 * 
+	 * @access private
+	 * @return void
+	 */
 	private function addfile() {
 		if( is_uploaded_file( $_FILES['file']['tmp_name'] ) ) {
 
@@ -890,19 +935,6 @@ class WPItheora {
 
 		// Create AmazonS3 object
 		$s3 = $this->getAmazonS3();
-
-		// Check if we do some other action from filemanager
-		//if( isset( $_GET['deleteLocal'] ) ) {
-			//// Delete local file
-			//$this->deleteLocal();
-		//}
-		if( isset( $_GET['deleteObject'] ) ) {
-			// Delete object
-			$s3->delete_object( $this->_itheora_config['bucket_name'], $_GET['deleteObject'] );
-		} elseif( isset( $_GET['deletePrefix'] ) ) {
-			// Delete all object with provided prefix
-			$results = $s3->delete_all_objects(  $this->_itheora_config['bucket_name'], '/' . str_replace( '/', '\/', $_GET['deletePrefix'] ) . '.*/' );
-		}
 
 		// If is send a FILE
 		if( isset( $_FILES['file'] ) ) {
@@ -1030,7 +1062,7 @@ class WPItheora {
 					<td><a href="http://<?php if( $this->_itheora_config['vhost'] != '' ) { echo $this->_itheora_config['vhost']; } else { echo $this->_itheora_config['bucket_name']; } echo '/' . $object->Key; ?>"><?php echo $object->Key; ?></a></td>
 					<td><?php echo $this->file_size( $object->Size ); ?></td>
 					<td><?php echo date_i18n( 'r', strtotime( $object->LastModified ), true ); ?></td>
-					<td class="wp-itheora-row-actions"><a id="<?php echo str_replace( array( ' ', '.', '/', ), '-' , $object->Key ) ; ?>" onclick="return object_metadata(' <?php echo $object->Key ;?>', this)" href=""><?php _e( 'Edit' ); ?></a> - <a onclick="return showNotice.warn();" href="<?php echo $this->currentPage() . '&amp;deleteObject=' . $object->Key; ?>"><?php _e( 'Delete' ); ?></a></td>
+					<td class="wp-itheora-row-actions"><a id="<?php echo str_replace( array( ' ', '.', '/', ), '-' , $object->Key ) ; ?>" onclick="return object_metadata(' <?php echo $object->Key ;?>', this)" href=""><?php _e( 'Edit' ); ?></a> - <a onclick="return delete_object('<?php echo $object->Key; ?>')" href=""><?php _e( 'Delete' ); ?></a></td>
 					<td class="wp-itheora-row-storagetype"><input id="wp-itheora-row-storagetype<?php echo str_replace(array('.', ' ', '/'), '-', $object->Key); ?>" onclick="change_redundancy('<?php echo $object->Key; ?>', this);" type="checkbox" value="<?php echo $object->Key; ?>" <?php checked( 'REDUCED_REDUNDANCY', $object->StorageClass); ?> /></td>
 				</tr>
 			<?php endforeach; ?>
@@ -1040,7 +1072,7 @@ class WPItheora {
 					<td><strong><?php echo $object->Prefix; ?></strong></td>
 					<td> - </td>
 					<td> - </td>
-					<td class="wp-itheora-row-actions"><a id="<?php echo str_replace( array( ' ', '.', '/', ), '-' , $object->Prefix ) ; ?>" onclick="return object_metadata(' <?php echo $object->Prefix ;?>', this)" href=""><?php _e( 'Edit' ); ?></a> - <a onclick="return showNotice.warn();" href="<?php echo $this->currentPage() . '&amp;deletePrefix=' . $object->Prefix; ?>"><?php _e( 'Delete' ); ?></a></td>
+					<td class="wp-itheora-row-actions"><a id="<?php echo str_replace( array( ' ', '.', '/', ), '-' , $object->Prefix ) ; ?>" onclick="return object_metadata(' <?php echo $object->Prefix ;?>', this)" href=""><?php _e( 'Edit' ); ?></a> - <a onclick="return delete_object('<?php echo $object->Prefix; ?>', true)" href=""><?php _e( 'Delete' ); ?></a></td>
 					<td class="wp-itheora-row-storagetype"> - </td>
 				</tr>
 				<?php $sub_objects = $s3->list_objects( $this->_itheora_config['bucket_name'], array( 'prefix' => $object->Prefix ) ); ?>
@@ -1050,7 +1082,7 @@ class WPItheora {
 							<td><a href="http://<?php if( $this->_itheora_config['vhost'] != '' ) { echo $this->_itheora_config['vhost']; } else { echo $this->_itheora_config['bucket_name']; } echo '/' . $sub_object->Key; ?>"><?php echo str_replace( $object->Prefix, '', $sub_object->Key ); ?></a></td>
 							<td><?php echo $this->file_size( $sub_object->Size ); ?></td>
 							<td><?php echo date_i18n( 'r', strtotime( $object->LastModified ), true ); ?></td>
-							<td class="wp-itheora-row-actions"><a id="<?php echo str_replace( array( ' ', '.', '/', ), '-' , $sub_object->Key ) ; ?>" onclick="return object_metadata(' <?php echo $sub_object->Key ;?>', this)" href=""><?php _e( 'Edit' ); ?></a> - <a onclick="return showNotice.warn();" href="<?php echo $this->currentPage() . '&amp;deleteObject=' . $sub_object->Key; ?>"><?php _e( 'Delete' ); ?></a></td>
+							<td class="wp-itheora-row-actions"><a id="<?php echo str_replace( array( ' ', '.', '/', ), '-' , $sub_object->Key ) ; ?>" onclick="return object_metadata(' <?php echo $sub_object->Key ;?>', this)" href=""><?php _e( 'Edit' ); ?></a> - <a onclick="return delete_object('<?php echo $sub_object->Key; ?>');" href=""><?php _e( 'Delete' ); ?></a></td>
 							<td class="wp-itheora-row-storagetype"><input id="wp-itora-row-storagetype<?php echo str_replace(array('.', ' ', '/'), '-', $sub_object->Key); ?>" onclick="change_redundancy('<?php echo $sub_object->Key; ?>',this);" type="checkbox" value="<?php echo $sub_object->Key; ?>" <?php checked( 'REDUCED_REDUNDANCY', $sub_object->StorageClass ); ?> /></td>
 						</tr>
 						<?php endif; ?>
@@ -1201,11 +1233,14 @@ register_deactivation_hook( __FILE__, array( &$WPItheora, 'wp_itheora_deactivati
 add_action( 'init', array( &$WPItheora, 'itheora_admin' ) );
 
 if( is_admin() ) {
-	add_action( 'wp_ajax_change_reduce_redundacy', array( &$WPItheora, 'change_reduce_redundacy' ) );
+	// Ajax function for local storage
 	add_action( 'wp_ajax_edit_local_file', array( &$WPItheora, 'edit_local_file' ) );
 	add_action( 'wp_ajax_delete_local_file', array( &$WPItheora, 'delete_local_file' ) );
+	// Ajax function for remote storage
 	add_action( 'wp_ajax_get_object_metadata', array( &$WPItheora, 'get_object_metadata' ) );
 	add_action( 'wp_ajax_set_object_metadata', array( &$WPItheora, 'set_object_metadata' ) );
+	add_action( 'wp_ajax_change_reduce_redundacy', array( &$WPItheora, 'change_reduce_redundacy' ) );
+	add_action( 'wp_ajax_delete_object', array( &$WPItheora, 'delete_object' ) );
 }
 
 add_filter( 'the_content', array( &$WPItheora, 'wp_itheora_exclusions' ), 2 );
