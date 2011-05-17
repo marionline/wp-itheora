@@ -187,7 +187,7 @@ class WPItheora {
 			add_action( "admin_print_scripts-".$page[$i], array(&$this, 'wp_itheora_admin_head') );
 		}
 		add_action('admin_print_scripts-'.$page[3], array(&$this, 'ajax_change_reduce_redundacy'));
-		add_action('admin_print_scripts-'.$page[3], array(&$this, 'ajax_edit_local_file'));
+		add_action('admin_print_scripts-'.$page[3], array(&$this, 'ajax_local_file'));
 		add_action('admin_print_scripts-'.$page[3], array(&$this, 'ajax_object_metadata'));
 
 		add_action( 'admin_init', array( &$this, 'wp_itheora_register_settings' ) );
@@ -362,12 +362,12 @@ class WPItheora {
 	} /** end wp_ithoera_infopage() */
 
 	/**
-	 * ajax_edit_local_file 
+	 * ajax_local_file 
 	 * 
 	 * @access public
 	 * @return void
 	 */
-	function ajax_edit_local_file() {
+	function ajax_local_file() {
 	 	?>
 		<script type="text/javascript">
 
@@ -403,6 +403,29 @@ class WPItheora {
 						},
 						close    : function() { jQuery('#wp-itheora-edit-form').remove() }
 					});
+				});
+
+				return false;
+			}
+
+			function delete_local_file(item, sub_item) {
+				if(sub_item==undefined)
+					var data = {
+						action   : 'delete_local_file',
+						item     : item,
+					};
+				else
+					var data = {
+						action   : 'delete_local_file',
+						item     : item,
+						sub_item : sub_item
+					};
+
+				jQuery.post(ajaxurl, data, function(delete_response) {
+					if(delete_response == true)
+						location.reload();
+					else
+						alert(delete_response);
 				});
 
 				return false;
@@ -795,35 +818,63 @@ class WPItheora {
 				}
 			}
 			reset( $objects );
-			rmdir( $dir );
+			$return = rmdir( $dir );
 		}
-		return;
+		
+		return $return;
 	}
 
 	/**
-	 * deleteLocal 
+	 * delete_local_file
 	 * Delete local file
 	 * 
 	 * @param mixed $itheora 
 	 * @access private
 	 * @return void
 	 */
-	private function deleteLocal( &$itheora ) {
-		$local_file = basename( $_GET['deleteLocal'] );
-		if( isset( $_GET['parentdir'] ) )
-			$parentdir = basename( $_GET['parentdir'] );
-		else
+	function delete_local_file() {
+		$local_file = basename( $_POST['item'] );
+		if( isset( $_POST['sub_item'] ) && $_POST['sub_item'] != '' ) {
+			$parentdir = basename( $local_file );
+			$local_file = $_POST['sub_item'];
+		} else {
 			$parentdir = false;
+		}
 
 		if( $parentdir )
-			$to_be_remove = $itheora->getVideoDir() . '/' . $parentdir . '/' . $local_file;
+			$to_be_remove = $this->_itheora_config['video_dir']  . '/' . $parentdir . '/' . $local_file;
 		else
-			$to_be_remove = $itheora->getVideoDir() . '/' . $local_file;
+			$to_be_remove = $this->_itheora_config['video_dir'] . '/' . $local_file;
 
 		if( is_dir( $to_be_remove ) )
-			$this->rrmdir( $to_be_remove );
+			$return = $this->rrmdir( $to_be_remove );
 		else 
-			unlink( $to_be_remove );
+			$return = unlink( $to_be_remove );
+
+		if( $return )
+			echo true;
+		else
+			echo __( 'Some error occurs' );
+
+		die;
+	}
+
+	private function addfile() {
+		if( is_uploaded_file( $_FILES['file']['tmp_name'] ) ) {
+
+			$tmp_name = $_FILES['file']['tmp_name'];
+			$name = $_FILES['file']['name'];
+
+			if( !is_dir( $this->_itheora_config['video_dir'] . '/' . pathinfo( $name, PATHINFO_FILENAME ) ) ) {
+				mkdir( $this->_itheora_config['video_dir'] . '/' . pathinfo( $name, PATHINFO_FILENAME ) );
+			}
+			move_uploaded_file($tmp_name, $this->_itheora_config['video_dir'] . '/' . pathinfo( $name, PATHINFO_FILENAME ) . '/'. $name);
+
+		} else {
+			$message = sprintf( __( "Impossible to upload this file: %s." ), $_FILES['file']['name'] );
+		}
+
+		return $message;
 	}
 
 	/**
@@ -841,10 +892,10 @@ class WPItheora {
 		$s3 = $this->getAmazonS3();
 
 		// Check if we do some other action from filemanager
-		if( isset( $_GET['deleteLocal'] ) ) {
-			// Delete local file
-			$this->deleteLocal( $itheora );
-		}
+		//if( isset( $_GET['deleteLocal'] ) ) {
+			//// Delete local file
+			//$this->deleteLocal();
+		//}
 		if( isset( $_GET['deleteObject'] ) ) {
 			// Delete object
 			$s3->delete_object( $this->_itheora_config['bucket_name'], $_GET['deleteObject'] );
@@ -852,7 +903,20 @@ class WPItheora {
 			// Delete all object with provided prefix
 			$results = $s3->delete_all_objects(  $this->_itheora_config['bucket_name'], '/' . str_replace( '/', '\/', $_GET['deletePrefix'] ) . '.*/' );
 		}
+
+		// If is send a FILE
+		if( isset( $_FILES['file'] ) ) {
+			$message = $this->addfile();
+		}
 		?>
+
+		<?php if( isset( $message )): ?>
+		<!-- Message from form -->
+		<div id="wp-itheora-message">
+			<?php echo $message; ?>
+		</div>
+
+		<?php endif; ?>
 
 		<!-- START LOCAL FILE TABLE -->
 		<table class="widefat fixed wp-itheora-table" cellspacing="0">
@@ -886,10 +950,10 @@ class WPItheora {
 							}
 							if( is_dir( $subdir ) ) {
 								$html .= '<td class="itheora-video-size"> - </td>' . PHP_EOL;
-								$html .= '<td class="wp-itheora-row-actions"><a id="wp-itheora-ldir-' . str_replace( ' ', '-', $item ) . '" onclick="return edit_local_file(\'' . $item . '\', this)" href="">' . __( 'Edit' ) . '</a> - <a class="submitdelete" onclick="return showNotice.warn();" href="' . $this->currentPage() . '&amp;deleteLocal=' . $item . '">' . __( 'Delete' ) . '</a></td>' . PHP_EOL;
+								$html .= '<td class="wp-itheora-row-actions"><a id="wp-itheora-ldir-' . str_replace( ' ', '-', $item ) . '" onclick="return edit_local_file(\'' . $item . '\', this)" href="">' . __( 'Edit' ) . '</a> - <a class="submitdelete" onclick="return delete_local_file(\'' . $item . '\');" href="">' . __( 'Delete' ) . '</a></td>' . PHP_EOL;
 							} else {
 								$html .= '<td class="itheora-video-size">' . $this->file_size( filesize( $itheora->getVideoDir() . '/' . $item ) ) .'</td>' . PHP_EOL;
-								$html .= '<td class="wp-itheora-row-actions"><a id="wp-itheora-lfile' . str_replace( ' ', '-', $item) . '" onclick="return edit_local_file(\'' . $item . '\', this)" href="">' . __( 'Edit' ) . '</a> - <a onclick="return showNotice.warn();" href="' . $this->currentPage() . '&amp;deleteLocal=' . $item . '">' . __( 'Delete' ) . '</a></td>' . PHP_EOL;
+								$html .= '<td class="wp-itheora-row-actions"><a id="wp-itheora-lfile' . str_replace( ' ', '-', $item) . '" onclick="return edit_local_file(\'' . $item . '\', this)" href="">' . __( 'Edit' ) . '</a> - <a onclick="return delete_local_file(\'' . $item . '\');" href="">' . __( 'Delete' ) . '</a></td>' . PHP_EOL;
 							}
 							$html .= '</tr>' . PHP_EOL;
 							if( is_dir( $subdir ) ) {
@@ -900,7 +964,7 @@ class WPItheora {
 											$html .= '<tr class="itheora-local-files">' . PHP_EOL;
 											$html .= '<td>' . $sub_item . '</td>' . PHP_EOL;
 											$html .= '<td class="itheora-video-size">' . $this->file_size( filesize( $itheora->getVideoDir() . '/' . $item . '/' . $sub_item ) ) .'</td>' . PHP_EOL;
-											$html .= '<td class="wp-itheora-row-actions"><a id="wp-itheora-sublfile' . str_replace( array( '.', ' ' ), '-', $sub_item ) . '" onclick="return edit_local_file(\'' . $sub_item . '\', this, \'' . $item . '\')" href="">' . __( 'Edit' ) . '</a> - <a onclick="return showNotice.warn();" href="' . $this->currentPage() . '&amp;parentdir=' . $item . '&amp;deleteLocal=' . $sub_item . '">' . __( 'Delete' ) . '</a></td>' . PHP_EOL;
+											$html .= '<td class="wp-itheora-row-actions"><a id="wp-itheora-sublfile' . str_replace( array( '.', ' ' ), '-', $sub_item ) . '" onclick="return edit_local_file(\'' . $sub_item . '\', this, \'' . $item . '\')" href="">' . __( 'Edit' ) . '</a> - <a onclick="return delete_local_file(\'' . $item . '\', \'' . $sub_item . '\');" href="">' . __( 'Delete' ) . '</a></td>' . PHP_EOL;
 											$html .= '</tr>' . PHP_EOL;
 										}
 									}
@@ -919,8 +983,20 @@ class WPItheora {
 
 		<h3><?php _e( 'Upload File Locally' ); ?></h3>
 		<?php if( isset( $error_message ) ) echo $error_message; ?>
-		<form action="addfile.php" method="post" enctype="multipart/form-data">
+		<form action="" method="post" enctype="multipart/form-data">
+
 			<p><?php _e( 'Upload file' ); ?>: <input type="file" name="file" /><input type="submit" name="submit" value="<?php _e( 'Upload' ); ?>" class="button" /></p>
+			<p>
+				<?php
+				$max_upload = (int)(ini_get('upload_max_filesize'));
+				$max_post = (int)(ini_get('post_max_size'));
+				$memory_limit = (int)(ini_get('memory_limit'));
+				$upload_mb = min($max_upload, $max_post, $memory_limit);
+
+				printf( __( 'Max file size that can be upload: %s Mb.' ), $upload_mb );
+				?>
+			</p>
+			<input name="MAX_FILE_SIZE" type="hidden" value="<?php echo $upload_mb * 1048576; ?>" />
 		</form>
 
 		<hr />
@@ -1127,6 +1203,7 @@ add_action( 'init', array( &$WPItheora, 'itheora_admin' ) );
 if( is_admin() ) {
 	add_action( 'wp_ajax_change_reduce_redundacy', array( &$WPItheora, 'change_reduce_redundacy' ) );
 	add_action( 'wp_ajax_edit_local_file', array( &$WPItheora, 'edit_local_file' ) );
+	add_action( 'wp_ajax_delete_local_file', array( &$WPItheora, 'delete_local_file' ) );
 	add_action( 'wp_ajax_get_object_metadata', array( &$WPItheora, 'get_object_metadata' ) );
 	add_action( 'wp_ajax_set_object_metadata', array( &$WPItheora, 'set_object_metadata' ) );
 }
