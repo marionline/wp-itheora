@@ -168,80 +168,6 @@ class WPItheora {
 	}
 
 	/**
-	 * wp_itheora_shortcode 
-	 * 
-	 * @access public
-	 * @return void
-	 */
-	function wp_itheora_shortcode($atts) {
-		$options = shortcode_atts(array(
-			'video' => 'example',
-			'width' => null,
-			'height' => null,
-			'remote' => false,
-			'skin' => '',
-			'alternativeName' => null,
-		), $atts);
-
-		// If no width or height are passed I use the image width and height
-		if( $options['width'] === null || $options['height'] === null ) {
-			if($options['useFilesInCloud']) {
-				// Inizialise AmazonS3 and itheora
-				$s3 = $this->getAmazonS3();
-				$itheora = new itheora(60, null, $s3, $this->_itheora_config);
-			} else {
-				$itheora = $this->getItheora();
-			}
-			$itheora->setVideoName($options['video']);
-			$posterSize = $itheora->getPosterSize();
-		}
-
-		if($options['width'] !== null) {
-			$width_style = 'width: ' . $options['width'] . 'px;';
-			$width_url = '&amp;w=' . $options['width'];
-		} else {
-			$width_style = 'width: ' . $posterSize[0] . 'px;';
-			$width_url = '&amp;w=' . $posterSize[0];
-		}
-
-		if($options['height'] !== null) {
-			$height_style = 'height: ' . $options['height'] . 'px;';
-			$height_url = '&amp;h=' . $options['height'];
-		} else {
-			$height_style = 'height: ' . $posterSize[1] . 'px;';
-			$height_url = '&amp;h=' . $posterSize[1];
-		}
-
-		if($options['remote']) {
-			$key = 'r';
-		} else {
-			$key = 'v';
-		}
-
-		if(isset($options['skin']) && $options['skin'] !== null)
-			$skin = '&amp;skin=' . $options['skin'];
-		else
-			$skin = '';
-
-		if(isset($options['alternativeName']) && $options['alternativeName'] !== null){
-			$id = $options['alternativeName'];
-			$name = $options['alternativeName'];
-		} else {
-			$id = $options['video'];
-			$name = $options['video'];
-		}
-
-		return '
-			<object id="' . $id . '" name="' . $name . '" class="itheora3-fork" type="application/xhtml+xml" data="' . WP_PLUGIN_URL. '/' . $this->_dir . '/itheora/index.php?' . $key . '=' . $options['video'] . $width_url . $height_url . $skin . '" style="' . $width_style . ' ' . $height_style . '"> 
-			</object>
-			<!--[if IE]>
-			<iframe id="' . $id . '" name="' . $name . '" class="itheora3-fork" type="application/xhtml+xml" data="' . WP_PLUGIN_URL. '/' . $this->_dir . '/itheora/index.php?' . $key . '=' . $options['video'] . $width_url . $height_url . $skin . '" style="' . $width_style . ' ' . $height_style . '" allowtransparency="true" frameborder="0" >
-			</iframe>
-			<![endif]-->
-			';
-	}
-
-	/**
 	 * wp_itheora_menu 
 	 * 
 	 * @access public
@@ -1295,6 +1221,95 @@ class WPItheora {
 	 *
 	 *
 	 *****************************************************/
+
+	/*****************************************************
+	 *
+	 *
+	 *  WP-itheora shortcode section
+	 *
+	 *
+	 *****************************************************/
+	/**
+	 * wp_itheora_shortcode 
+	 * 
+	 * @access public
+	 * @return void
+	 */
+	function wp_itheora_shortcode($atts) {
+		$options = shortcode_atts(array(
+			'video' => 'example',
+			'width' => null,
+			'height' => null,
+			'remote' => false,
+			'skin' => '',
+			'alternativeName' => null,
+		), $atts);
+
+		// If no width or height are passed I use the image width and height
+		if( $options['width'] === null || $options['height'] === null ) {
+			if($options['useFilesInCloud']) {
+				// Inizialise AmazonS3 and itheora
+				$s3 = $this->getAmazonS3();
+				$itheora = new itheora(60, null, $s3, $this->_itheora_config);
+			} else {
+				$itheora = $this->getItheora();
+			}
+			$itheora->setVideoName($options['video']);
+			$posterSize = $itheora->getPosterSize();
+		}
+
+		if($options['width'] !== null) {
+			$width_style = 'width: ' . $options['width'] . 'px;';
+			$width_url = '&amp;w=' . $options['width'];
+		} else {
+			$width_style = 'width: ' . $posterSize[0] . 'px;';
+			$width_url = '&amp;w=' . $posterSize[0];
+		}
+
+		if($options['height'] !== null) {
+			$height_style = 'height: ' . $options['height'] . 'px;';
+			$height_url = '&amp;h=' . $options['height'];
+		} else {
+			$height_style = 'height: ' . $posterSize[1] . 'px;';
+			$height_url = '&amp;h=' . $posterSize[1];
+		}
+
+		if($options['remote']) {
+			$key = 'r';
+		} else {
+			$key = 'v';
+		}
+
+		if(isset($options['skin']) && $options['skin'] !== null)
+			$skin = '&amp;skin=' . $options['skin'];
+		else
+			$skin = '';
+
+		if(isset($options['alternativeName']) && $options['alternativeName'] !== null){
+			$id = $options['alternativeName'];
+			$name = $options['alternativeName'];
+		} else {
+			$id = $options['video'];
+			$name = $options['video'];
+		}
+
+		return '
+			<object id="' . $id . '" name="' . $name . '" class="itheora3-fork" type="application/xhtml+xml" data="' . WP_PLUGIN_URL. '/' . $this->_dir . '/itheora/index.php?' . $key . '=' . $options['video'] . $width_url . $height_url . $skin . '" style="' . $width_style . ' ' . $height_style . '"> 
+			</object>
+			<!--[if IE]>
+			<iframe id="' . $id . '" name="' . $name . '" class="itheora3-fork" type="application/xhtml+xml" data="' . WP_PLUGIN_URL. '/' . $this->_dir . '/itheora/index.php?' . $key . '=' . $options['video'] . $width_url . $height_url . $skin . '" style="' . $width_style . ' ' . $height_style . '" allowtransparency="true" frameborder="0" >
+			</iframe>
+			<![endif]-->
+			';
+	}
+	/*****************************************************
+	 *
+	 *
+	 *  End WP-itheora shortcode section
+	 *
+	 *
+	 *****************************************************/
+
 }
 
 
