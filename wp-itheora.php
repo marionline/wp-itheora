@@ -1302,6 +1302,36 @@ class WPItheora {
 			<![endif]-->
 			';
 	}
+
+	function wpitheora_media_button($context) {
+		global $post_ID, $temp_ID;
+		$uploading_iframe_ID = (int) (0 == $post_ID ? $temp_ID : $post_ID);
+		$media_upload_iframe_src = "media-upload.php?post_id=$uploading_iframe_ID";
+
+		$plugin_media_button = ' %s' . '<a id="wp-itheora-button" class="thickbox" href="' . $media_upload_iframe_src . '&type=wpitheora&TB_iframe=true"><img src="' . WP_PLUGIN_URL . '/' . $this->_dir . '/img/fish_theora_org.png" /></a>';
+		return sprintf($context, $plugin_media_button);
+	}
+
+	function wpitheora_media_menu( $tabs ) {
+		$newtab = array( 'wpitheora' => __('WP-Itheora', 'wpitheora') );
+		return array_merge($tabs, $newtab);
+	}
+
+	function wpitheora_menu_handle() {
+		function media_wpitheora_menu_process() {
+			media_upload_header();
+			echo "WP-Itheora tab";
+		}
+
+		return wp_iframe( 'media_wpitheora_menu_process' );
+	}
+
+	function add_media_button() {
+		add_filter('media_buttons_context', array( &$this, 'wpitheora_media_button' ) );
+
+		add_filter('media_upload_tabs', array( &$this, 'wpitheora_media_menu' ) );
+		add_action('media_upload_wpitheora', array( &$this, 'wpitheora_menu_handle' ) );
+	}
 	/*****************************************************
 	 *
 	 *
@@ -1330,6 +1360,9 @@ if( is_admin() ) {
 	add_action( 'wp_ajax_set_object_metadata', array( &$WPItheora, 'set_object_metadata' ) );
 	add_action( 'wp_ajax_change_reduce_redundacy', array( &$WPItheora, 'change_reduce_redundacy' ) );
 	add_action( 'wp_ajax_delete_object', array( &$WPItheora, 'delete_object' ) );
+
+	// Add button to wordpress media buttons editor
+	$WPItheora->add_media_button();
 }
 
 add_filter( 'the_content', array( &$WPItheora, 'wp_itheora_exclusions' ), 2 );
