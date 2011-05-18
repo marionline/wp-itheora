@@ -180,7 +180,7 @@ class WPItheora {
 			'height' => null,
 			'remote' => false,
 			'skin' => '',
-			'alternativeName' => '',
+			'alternativeName' => null,
 		), $atts);
 
 		// If no width or height are passed I use the image width and height
@@ -231,8 +231,14 @@ class WPItheora {
 			$name = $options['video'];
 		}
 
-		return '<object id="' . $id . '" name="' . $name . '" class="itheora3-fork" type="application/xhtml+xml" data="' . WP_PLUGIN_URL. '/' . $this->_dir . '/itheora/index.php?' . $key . '=' . $options['video'] . $width_url . $height_url . $skin . '" style="' . $width_style . ' ' . $height_style . '"> 
-			</object>';
+		return '
+			<object id="' . $id . '" name="' . $name . '" class="itheora3-fork" type="application/xhtml+xml" data="' . WP_PLUGIN_URL. '/' . $this->_dir . '/itheora/index.php?' . $key . '=' . $options['video'] . $width_url . $height_url . $skin . '" style="' . $width_style . ' ' . $height_style . '"> 
+			</object>
+			<!--[if IE]>
+			<iframe id="' . $id . '" name="' . $name . '" class="itheora3-fork" type="application/xhtml+xml" data="' . WP_PLUGIN_URL. '/' . $this->_dir . '/itheora/index.php?' . $key . '=' . $options['video'] . $width_url . $height_url . $skin . '" style="' . $width_style . ' ' . $height_style . '" allowtransparency="true" frameborder="0" >
+			</iframe>
+			<![endif]-->
+			';
 	}
 
 	/**
