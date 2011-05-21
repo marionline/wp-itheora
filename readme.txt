@@ -22,14 +22,14 @@ ITheora is a PHP script allowing you to broadcast ogg/theora/vorbis only videos 
 = Usage? =
 1. Configure wp-itheora from the wp-itheora settings page.
 2. Upload your videos on your server or in the amazon s3 cloud. You can use the upload forms from wp-itheora video page.
-3. Use [wp-itheora] tag in your post.
+3. Use [wp-itheora] tag in your post. It is not necessary to disable WordPress visual editor, like in previous version.
 
 = [wp-itheora] tag options? =
 You can set:
 * video, witch video you want to use (just the filename of your video);
 * width and height, dimension of video;
 * remote, tell to use video store in the cloud (true or false, default is false);
-* skin, which video-js skin to use vim, hu or tube;
+* skin, which video-js skin to use default (no skin provide), vim, hu or tube;
 * alternativeName, if you embend multiple video it is better to tell alternative name to your video;
 
 = How videos are stored? =
@@ -46,12 +46,14 @@ In wp-itheora you should specify just the name: "example".
 [wp-itheora]
 Present default video with default skin with haight and width of the video poster.
 
-[wp-itheora video=other remote=true]
-Present "other" video store in the cloud.
+[wp-itheora video=myvideo remote=true]
+Present "myvideo" video that is stored in the cloud.
 
 == Screenshots ==
-1. Create player
-2. Create player: view the code and preview
+1. WP-Itheora info page
+2. WP-Itheora config settings page
+3. WP-Itheora manage local file in WP-Itheora video page administration
+4. WP-Itheora manage remote file in the cloud in WP-ITheora video page administration
 
 == Changelog ==
 = v0.1 =
@@ -60,6 +62,8 @@ This is the first version, there are some bugs to solve but it works fine for me
 This is for me a stable version with a basic feature. With this version I can create in a easy way an html code for my video to embend in my article, simply copy and paste the code.
 = v0.1.2 =
 wp-itheora is on Wordpress Plugins Directory too, this version include little change in version name.
+= v0.1.3 =
+wp-itheora use itheora3-fork and video-js to view video. Add support to Amazon S3 cloud storage and now is possible to manage local and remote file. Add shortcode tag to insert video using wp-itheora.
 
 == Upgrade Notice ==
 Backup your previous videos if you use wp-itheora before version v0.1.2
@@ -67,10 +71,10 @@ Backup your previous videos if you use wp-itheora before version v0.1.2
 == TODO ==
 * Add integration to wordpress editor (need a workaround to prevent the modification of code by visual mode)
 * Add thumbnail features
-* Add tag modification features of video
 * Add Create playlist option
 
 == FIXED ==
 * Resolve bug to fix: error when I give only the filename of a video without extension. Now work for me.
 * Wp-itheora is i18n.
 * Add send file and list file on "data" directory (in future list file on amazon s3)
+* Add tag modification features of video
