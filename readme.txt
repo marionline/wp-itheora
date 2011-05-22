@@ -72,6 +72,7 @@ Backup your previous videos if you use wp-itheora before version v0.1.2
 * Add integration to wordpress editor (need a workaround to prevent the modification of code by visual mode)
 * Add thumbnail features
 * Add Create playlist option
+* Correct some mistake in version release
 
 == FIXED ==
 * Resolve bug to fix: error when I give only the filename of a video without extension. Now work for me.
