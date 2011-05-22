@@ -4,7 +4,7 @@ Donate link: http://www.marionline.it/
 Tags: video, streaming, theora, ogg, itheora
 Requires at least: 2.5
 Tested up to: 2.9.1
-Stable tag: v0.1.3
+Stable tag: v0.2.0
 
 == Description ==
 

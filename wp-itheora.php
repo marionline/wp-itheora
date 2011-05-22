@@ -4,7 +4,7 @@ Plugin Name: itheora in wordpress
 Plugin URI: http://github.com/marionline/wp-itheora
 Description: With this plugin you can use itheora script (included in this plugin) to add theora video on your blog.
 Author: Mario Santagiuliana
-Version: v0.1.3
+Version: v0.2.0
 Author URI: http://www.marionline.it/
 License: GPL version 3
 
