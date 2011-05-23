@@ -4,7 +4,7 @@ Donate link: http://www.marionline.it/
 Tags: video, streaming, theora, ogg, itheora
 Requires at least: 2.5
 Tested up to: 2.9.1
-Stable tag: v0.2.0
+Stable tag: v0.2.1
 
 == Description ==
 
@@ -64,6 +64,10 @@ This is for me a stable version with a basic feature. With this version I can cr
 wp-itheora is on Wordpress Plugins Directory too, this version include little change in version name.
 = v0.1.3 =
 wp-itheora use itheora3-fork and video-js to view video. Add support to Amazon S3 cloud storage and now is possible to manage local and remote file. Add shortcode tag to insert video using wp-itheora.
+= v0.2.0 =
+Fix some mistake in previous version. This is the real new version of wp-itherora.
+= v0.2.1 =
+Use itheora3-fork version 0.1-beta.
 
 == Upgrade Notice ==
 Backup your previous videos if you use wp-itheora before version v0.1.2
